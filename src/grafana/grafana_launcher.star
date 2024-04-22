@@ -38,12 +38,19 @@ USED_PORTS = {
     )
 }
 
+# The min/max CPU/memory that grafana can use
+MIN_CPU = 10
+MAX_CPU = 1000
+MIN_MEMORY = 128
+MAX_MEMORY = 2048
+
 
 def launch_grafana(
     plan,
     datasource_config_template,
     dashboard_providers_config_template,
     prometheus_private_url,
+    global_node_selectors,
     additional_dashboards=[],
 ):
     (
@@ -67,6 +74,7 @@ def launch_grafana(
     config = get_config(
         grafana_config_artifacts_uuid,
         merged_dashboards_artifact_name,
+        global_node_selectors,
     )
 
     plan.add_service(SERVICE_NAME, config)
@@ -121,6 +129,7 @@ def get_grafana_config_dir_artifact_uuid(
 def get_config(
     grafana_config_artifacts_name,
     grafana_dashboards_artifacts_name,
+    node_selectors,
 ):
     return ServiceConfig(
         image=IMAGE_NAME,
@@ -137,6 +146,11 @@ def get_config(
             GRAFANA_CONFIG_DIRPATH_ON_SERVICE: grafana_config_artifacts_name,
             GRAFANA_DASHBOARDS_DIRPATH_ON_SERVICE: grafana_dashboards_artifacts_name,
         },
+        min_cpu=MIN_CPU,
+        max_cpu=MAX_CPU,
+        min_memory=MIN_MEMORY,
+        max_memory=MAX_MEMORY,
+        node_selectors=node_selectors,
     )
 
 
@@ -189,6 +203,7 @@ def merge_dashboards_artifacts(
         ] = additional_dashboard_data[GRANAFA_ADDITIONAL_DASHBOARDS_ARTIFACT_NAME_KEY]
 
     result = plan.run_sh(
+        description="Merging grafana dashboards artifacts",
         run="find "
         + GRAFANA_ADDITIONAL_DASHBOARDS_FILEPATH_ON_SERVICE
         + " -type f -exec cp {} "

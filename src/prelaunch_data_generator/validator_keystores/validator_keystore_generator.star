@@ -102,14 +102,23 @@ def generate_validator_keystores(plan, mnemonic, participants):
             start_index,
             stop_index,
         )
-
+        teku_permissions_cmd = (
+            "chmod 0777 -R " + output_dirpath + "/" + TEKU_KEYS_DIRNAME
+        )
+        raw_secret_permissions_cmd = (
+            "chmod 0600 -R " + output_dirpath + "/" + RAW_SECRETS_DIRNAME
+        )
         all_sub_command_strs.append(generate_keystores_cmd)
+        all_sub_command_strs.append(teku_permissions_cmd)
+        all_sub_command_strs.append(raw_secret_permissions_cmd)
         all_output_dirpaths.append(output_dirpath)
 
     command_str = " && ".join(all_sub_command_strs)
 
     command_result = plan.exec(
-        recipe=ExecRecipe(command=["sh", "-c", command_str]), service_name=service_name
+        service_name=service_name,
+        description="Generating keystores",
+        recipe=ExecRecipe(command=["sh", "-c", command_str]),
     )
     plan.verify(command_result["code"], "==", SUCCESSFUL_EXEC_CMD_EXIT_CODE)
 
@@ -127,8 +136,8 @@ def generate_validator_keystores(plan, mnemonic, participants):
         keystore_stop_index = (keystore_start_index + participant.validator_count) - 1
         artifact_name = "{0}-{1}-{2}-{3}-{4}".format(
             padded_idx,
-            participant.cl_client_type,
-            participant.el_client_type,
+            participant.cl_type,
+            participant.el_type,
             keystore_start_index,
             keystore_stop_index,
         )
@@ -140,6 +149,7 @@ def generate_validator_keystores(plan, mnemonic, participants):
         base_dirname_in_artifact = shared_utils.path_base(output_dirpath)
         to_add = keystore_files_module.new_keystore_files(
             artifact_name,
+            shared_utils.path_join(base_dirname_in_artifact),
             shared_utils.path_join(base_dirname_in_artifact, RAW_KEYS_DIRNAME),
             shared_utils.path_join(base_dirname_in_artifact, RAW_SECRETS_DIRNAME),
             shared_utils.path_join(base_dirname_in_artifact, NIMBUS_KEYS_DIRNAME),
@@ -159,8 +169,9 @@ def generate_validator_keystores(plan, mnemonic, participants):
         ),
     ]
     write_prysm_password_file_cmd_result = plan.exec(
-        recipe=ExecRecipe(command=write_prysm_password_file_cmd),
         service_name=service_name,
+        description="Storing prysm password in a file",
+        recipe=ExecRecipe(command=write_prysm_password_file_cmd),
     )
     plan.verify(
         write_prysm_password_file_cmd_result["code"],
@@ -218,6 +229,14 @@ def generate_valdiator_keystores_in_parallel(plan, mnemonic, participants):
             stop_index,
             generation_finished_filepath,
         )
+        teku_permissions_cmd = (
+            " && chmod 777 -R " + output_dirpath + "/" + TEKU_KEYS_DIRNAME
+        )
+        raw_secret_permissions_cmd = (
+            " && chmod 0600 -R " + output_dirpath + "/" + RAW_SECRETS_DIRNAME
+        )
+        generate_keystores_cmd += teku_permissions_cmd
+        generate_keystores_cmd += raw_secret_permissions_cmd
         all_generation_commands.append(generate_keystores_cmd)
         all_output_dirpaths.append(output_dirpath)
 
@@ -229,10 +248,11 @@ def generate_valdiator_keystores_in_parallel(plan, mnemonic, participants):
             # no generation command as validator count is 0
             continue
         plan.exec(
+            service_name=service_name,
+            description="Generating keystore for participant " + str(idx),
             recipe=ExecRecipe(
                 command=["sh", "-c", generation_command + " >/dev/null 2>&1 &"]
             ),
-            service_name=service_name,
         )
 
     # verify that files got created
@@ -270,8 +290,8 @@ def generate_valdiator_keystores_in_parallel(plan, mnemonic, participants):
         keystore_stop_index = (keystore_start_index + participant.validator_count) - 1
         artifact_name = "{0}-{1}-{2}-{3}-{4}".format(
             padded_idx,
-            participant.cl_client_type,
-            participant.el_client_type,
+            participant.cl_type,
+            participant.el_type,
             keystore_start_index,
             keystore_stop_index,
         )
@@ -283,6 +303,7 @@ def generate_valdiator_keystores_in_parallel(plan, mnemonic, participants):
         base_dirname_in_artifact = shared_utils.path_base(output_dirpath)
         to_add = keystore_files_module.new_keystore_files(
             artifact_name,
+            shared_utils.path_join(base_dirname_in_artifact),
             shared_utils.path_join(base_dirname_in_artifact, RAW_KEYS_DIRNAME),
             shared_utils.path_join(base_dirname_in_artifact, RAW_SECRETS_DIRNAME),
             shared_utils.path_join(base_dirname_in_artifact, NIMBUS_KEYS_DIRNAME),
@@ -302,8 +323,9 @@ def generate_valdiator_keystores_in_parallel(plan, mnemonic, participants):
         ),
     ]
     write_prysm_password_file_cmd_result = plan.exec(
-        recipe=ExecRecipe(command=write_prysm_password_file_cmd),
         service_name=service_names[0],
+        description="Storing prysm password in a file",
+        recipe=ExecRecipe(command=write_prysm_password_file_cmd),
     )
     plan.verify(
         write_prysm_password_file_cmd_result["code"],

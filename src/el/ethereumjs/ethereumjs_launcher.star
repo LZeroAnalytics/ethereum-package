@@ -1,11 +1,10 @@
 shared_utils = import_module("../../shared_utils/shared_utils.star")
 input_parser = import_module("../..//package_io/input_parser.star")
-el_client_context = import_module("../../el/el_client_context.star")
+el_context = import_module("../../el/el_context.star")
 el_admin_node_info = import_module("../../el/el_admin_node_info.star")
 
 node_metrics = import_module("../../node_metrics_info.star")
 constants = import_module("../../package_io/constants.star")
-
 
 RPC_PORT_NUM = 8545
 WS_PORT_NUM = 8546
@@ -16,9 +15,7 @@ METRICS_PORT_NUM = 9001
 
 # The min/max CPU/memory that the execution node can use
 EXECUTION_MIN_CPU = 100
-EXECUTION_MAX_CPU = 1000
 EXECUTION_MIN_MEMORY = 256
-EXECUTION_MAX_MEMORY = 1024
 
 # Port IDs
 RPC_PORT_ID = "rpc"
@@ -31,12 +28,14 @@ METRICS_PORT_ID = "metrics"
 METRICS_PATH = "/metrics"
 
 # The dirpath of the execution data directory on the client container
-EXECUTION_DATA_DIRPATH_ON_CLIENT_CONTAINER = "/execution-data"
+EXECUTION_DATA_DIRPATH_ON_CLIENT_CONTAINER = "/data/ethereumjs/execution-data"
 
 PRIVATE_IP_ADDRESS_PLACEHOLDER = "KURTOSIS_IP_ADDR_PLACEHOLDER"
 
 USED_PORTS = {
-    RPC_PORT_ID: shared_utils.new_port_spec(RPC_PORT_NUM, shared_utils.TCP_PROTOCOL),
+    RPC_PORT_ID: shared_utils.new_port_spec(
+        RPC_PORT_NUM, shared_utils.TCP_PROTOCOL, shared_utils.HTTP_APPLICATION_PROTOCOL
+    ),
     WS_PORT_ID: shared_utils.new_port_spec(WS_PORT_NUM, shared_utils.TCP_PROTOCOL),
     WS_PORT_ENGINE_ID: shared_utils.new_port_spec(
         WS_PORT_ENGINE_NUM, shared_utils.TCP_PROTOCOL
@@ -56,11 +55,11 @@ USED_PORTS = {
 ENTRYPOINT_ARGS = []
 
 VERBOSITY_LEVELS = {
-    constants.GLOBAL_CLIENT_LOG_LEVEL.error: "error",
-    constants.GLOBAL_CLIENT_LOG_LEVEL.warn: "warn",
-    constants.GLOBAL_CLIENT_LOG_LEVEL.info: "info",
-    constants.GLOBAL_CLIENT_LOG_LEVEL.debug: "debug",
-    constants.GLOBAL_CLIENT_LOG_LEVEL.trace: "trace",
+    constants.GLOBAL_LOG_LEVEL.error: "error",
+    constants.GLOBAL_LOG_LEVEL.warn: "warn",
+    constants.GLOBAL_LOG_LEVEL.info: "info",
+    constants.GLOBAL_LOG_LEVEL.debug: "debug",
+    constants.GLOBAL_LOG_LEVEL.trace: "trace",
 }
 
 
@@ -71,7 +70,6 @@ def launch(
     image,
     participant_log_level,
     global_log_level,
-    # If empty then the node will be launched as a bootnode
     existing_el_clients,
     el_min_cpu,
     el_max_cpu,
@@ -79,22 +77,46 @@ def launch(
     el_max_mem,
     extra_params,
     extra_env_vars,
+    extra_labels,
+    persistent,
+    el_volume_size,
+    tolerations,
+    node_selectors,
 ):
     log_level = input_parser.get_client_log_level_or_default(
         participant_log_level, global_log_level, VERBOSITY_LEVELS
     )
 
-    el_min_cpu = el_min_cpu if int(el_min_cpu) > 0 else EXECUTION_MIN_CPU
-    el_max_cpu = el_max_cpu if int(el_max_cpu) > 0 else EXECUTION_MAX_CPU
-    el_min_mem = el_min_mem if int(el_min_mem) > 0 else EXECUTION_MIN_MEMORY
-    el_max_mem = el_max_mem if int(el_max_mem) > 0 else EXECUTION_MAX_MEMORY
+    network_name = shared_utils.get_network_name(launcher.network)
+
+    el_min_cpu = int(el_min_cpu) if int(el_min_cpu) > 0 else EXECUTION_MIN_CPU
+    el_max_cpu = (
+        int(el_max_cpu)
+        if int(el_max_cpu) > 0
+        else constants.RAM_CPU_OVERRIDES[network_name]["ethereumjs_max_cpu"]
+    )
+    el_min_mem = int(el_min_mem) if int(el_min_mem) > 0 else EXECUTION_MIN_MEMORY
+    el_max_mem = (
+        int(el_max_mem)
+        if int(el_max_mem) > 0
+        else constants.RAM_CPU_OVERRIDES[network_name]["ethereumjs_max_mem"]
+    )
+
+    el_volume_size = (
+        el_volume_size
+        if int(el_volume_size) > 0
+        else constants.VOLUME_SIZE[network_name]["ethereumjs_volume_size"]
+    )
 
     cl_client_name = service_name.split("-")[3]
 
     config = get_config(
-        service_name,
+        plan,
         launcher.el_cl_genesis_data,
+        launcher.jwt_file,
+        launcher.network,
         image,
+        service_name,
         existing_el_clients,
         cl_client_name,
         log_level,
@@ -104,6 +126,11 @@ def launch(
         el_max_mem,
         extra_params,
         extra_env_vars,
+        extra_labels,
+        persistent,
+        el_volume_size,
+        tolerations,
+        node_selectors,
     )
 
     service = plan.add_service(service_name, config)
@@ -114,7 +141,7 @@ def launch(
     # metrics_url = "http://{0}:{1}".format(service.ip_address, METRICS_PORT_NUM)
     ethjs_metrics_info = None
 
-    return el_client_context.new_el_client_context(
+    return el_context.new_el_context(
         "ethereumjs",
         "",  # ethereumjs has no enr
         enode,
@@ -128,9 +155,12 @@ def launch(
 
 
 def get_config(
-    service_name,
+    plan,
     el_cl_genesis_data,
+    jwt_file,
+    network,
     image,
+    service_name,
     existing_el_clients,
     cl_client_name,
     verbosity_level,
@@ -140,11 +170,13 @@ def get_config(
     el_max_mem,
     extra_params,
     extra_env_vars,
+    extra_labels,
+    persistent,
+    el_volume_size,
+    tolerations,
+    node_selectors,
 ):
     cmd = [
-        "--gethGenesis="
-        + constants.GENESIS_CONFIG_MOUNT_PATH_ON_CONTAINER
-        + "/genesis.json",
         "--dataDir=" + EXECUTION_DATA_DIRPATH_ON_CLIENT_CONTAINER,
         "--port={0}".format(DISCOVERY_PORT_NUM),
         "--rpc",
@@ -159,21 +191,38 @@ def get_config(
         "--wsPort={0}".format(WS_PORT_NUM),
         "--wsEnginePort={0}".format(WS_PORT_ENGINE_NUM),
         "--wsEngineAddr=0.0.0.0",
-        "--jwt-secret=" + constants.JWT_AUTH_PATH,
+        "--jwt-secret=" + constants.JWT_MOUNT_PATH_ON_CONTAINER,
         "--extIP={0}".format(PRIVATE_IP_ADDRESS_PLACEHOLDER),
         "--sync=full",
         "--isSingleNode=true",
         "--logLevel={0}".format(verbosity_level),
     ]
 
-    if len(existing_el_clients) > 0:
+    if network not in constants.PUBLIC_NETWORKS:
+        cmd.append(
+            "--gethGenesis="
+            + constants.GENESIS_CONFIG_MOUNT_PATH_ON_CONTAINER
+            + "/genesis.json",
+        )
+    else:
+        cmd.append("--network=" + network)
+
+    if network == constants.NETWORK_NAME.kurtosis:
+        if len(existing_el_clients) > 0:
+            cmd.append(
+                "--bootnodes="
+                + ",".join(
+                    [
+                        ctx.enode
+                        for ctx in existing_el_clients[: constants.MAX_ENODE_ENTRIES]
+                    ]
+                )
+            )
+    elif network not in constants.PUBLIC_NETWORKS:
         cmd.append(
             "--bootnodes="
-            + ",".join(
-                [
-                    ctx.enode
-                    for ctx in existing_el_clients[: constants.MAX_ENODE_ENTRIES]
-                ]
+            + shared_utils.get_devnet_enodes(
+                plan, el_cl_genesis_data.files_artifact_uuid
             )
         )
 
@@ -181,13 +230,21 @@ def get_config(
         # this is a repeated<proto type>, we convert it into Starlark
         cmd.extend([param for param in extra_params])
 
+    files = {
+        constants.GENESIS_DATA_MOUNTPOINT_ON_CLIENTS: el_cl_genesis_data.files_artifact_uuid,
+        constants.JWT_MOUNTPOINT_ON_CLIENTS: jwt_file,
+    }
+
+    if persistent:
+        files[EXECUTION_DATA_DIRPATH_ON_CLIENT_CONTAINER] = Directory(
+            persistent_key="data-{0}".format(service_name),
+            size=el_volume_size,
+        )
     return ServiceConfig(
         image=image,
         ports=USED_PORTS,
         cmd=cmd,
-        files={
-            constants.GENESIS_DATA_MOUNTPOINT_ON_CLIENTS: el_cl_genesis_data.files_artifact_uuid,
-        },
+        files=files,
         entrypoint=ENTRYPOINT_ARGS,
         private_ip_address_placeholder=PRIVATE_IP_ADDRESS_PLACEHOLDER,
         min_cpu=el_min_cpu,
@@ -196,16 +253,20 @@ def get_config(
         max_memory=el_max_mem,
         env_vars=extra_env_vars,
         labels=shared_utils.label_maker(
-            service_name,
-            constants.EL_CLIENT_TYPE.ethereumjs,
+            constants.EL_TYPE.ethereumjs,
             constants.CLIENT_TYPES.el,
             image,
             cl_client_name,
+            extra_labels,
         ),
+        tolerations=tolerations,
+        node_selectors=node_selectors,
     )
 
 
-def new_ethereumjs_launcher(el_cl_genesis_data):
+def new_ethereumjs_launcher(el_cl_genesis_data, jwt_file, network):
     return struct(
         el_cl_genesis_data=el_cl_genesis_data,
+        jwt_file=jwt_file,
+        network=network,
     )

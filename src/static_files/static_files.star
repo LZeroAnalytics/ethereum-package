@@ -11,20 +11,36 @@ EL_FORKMON_CONFIG_TEMPLATE_FILEPATH = (
     STATIC_FILES_DIRPATH + "/el-forkmon-config/config.toml.tmpl"
 )
 
-# Prometheus config
-PROMETHEUS_CONFIG_TEMPLATE_FILEPATH = (
-    STATIC_FILES_DIRPATH + "/prometheus-config/prometheus.yml.tmpl"
-)
-
 # Validator Ranges config
 VALIDATOR_RANGES_CONFIG_TEMPLATE_FILEPATH = (
     STATIC_FILES_DIRPATH + "/validator-ranges/config.yaml.tmpl"
 )
 
 DORA_CONFIG_TEMPLATE_FILEPATH = STATIC_FILES_DIRPATH + "/dora-config/config.yaml.tmpl"
+DUGTRIO_CONFIG_TEMPLATE_FILEPATH = (
+    STATIC_FILES_DIRPATH + "/dugtrio-config/config.yaml.tmpl"
+)
+BLUTGANG_CONFIG_TEMPLATE_FILEPATH = (
+    STATIC_FILES_DIRPATH + "/blutgang-config/config.toml.tmpl"
+)
 
 FULL_BEACONCHAIN_CONFIG_TEMPLATE_FILEPATH = (
     STATIC_FILES_DIRPATH + "/full-beaconchain-config/config.yaml.tmpl"
+)
+
+# assertoor config
+ASSERTOOR_CONFIG_DIRPATH = "/assertoor-config"
+ASSERTOOR_CONFIG_TEMPLATE_FILEPATH = (
+    STATIC_FILES_DIRPATH + ASSERTOOR_CONFIG_DIRPATH + "/config.yaml.tmpl"
+)
+ASSERTOOR_TESTS_CONFIG_DIRPATH = (
+    STATIC_FILES_DIRPATH + ASSERTOOR_CONFIG_DIRPATH + "/tests"
+)
+
+# xatu-sentry config
+XATU_SENTRY_CONFIG_DIRPATH = "/xatu-sentry-config"
+XATU_SENTRY_CONFIG_TEMPLATE_FILEPATH = (
+    STATIC_FILES_DIRPATH + XATU_SENTRY_CONFIG_DIRPATH + "/config.yaml.tmpl"
 )
 
 # Grafana config
@@ -56,3 +72,11 @@ CL_GENESIS_GENERATION_CONFIG_TEMPLATE_FILEPATH = (
 CL_GENESIS_GENERATION_MNEMONICS_TEMPLATE_FILEPATH = (
     CL_GENESIS_GENERATION_CONFIG_DIRPATH + "/mnemonics.yaml.tmpl"
 )
+
+JWT_PATH_FILEPATH = STATIC_FILES_DIRPATH + "/jwt/jwtsecret"
+KEYMANAGER_PATH_FILEPATH = STATIC_FILES_DIRPATH + "/keymanager/keymanager.txt"
+KEYMANAGER_P12_PATH_FILEPATH = (
+    STATIC_FILES_DIRPATH + "/keymanager/validator_keystore.p12"
+)
+
+SHADOWFORK_FILEPATH = "/network-configs/latest_block.json"

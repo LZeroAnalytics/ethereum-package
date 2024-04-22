@@ -19,14 +19,21 @@ USED_PORTS = {
     )
 }
 
+# The min/max CPU/memory that el-forkmon can use
+MIN_CPU = 10
+MAX_CPU = 100
+MIN_MEMORY = 32
+MAX_MEMORY = 256
+
 
 def launch_el_forkmon(
     plan,
     config_template,
-    el_client_contexts,
+    el_contexts,
+    global_node_selectors,
 ):
     all_el_client_info = []
-    for client in el_client_contexts:
+    for client in el_contexts:
         client_info = new_el_client_info(
             client.ip_addr, client.rpc_port_num, client.service_name
         )
@@ -46,12 +53,15 @@ def launch_el_forkmon(
         template_and_data_by_rel_dest_filepath, "el-forkmon-config"
     )
 
-    config = get_config(config_files_artifact_name)
+    config = get_config(
+        config_files_artifact_name,
+        global_node_selectors,
+    )
 
     plan.add_service(SERVICE_NAME, config)
 
 
-def get_config(config_files_artifact_name):
+def get_config(config_files_artifact_name, node_selectors):
     config_file_path = shared_utils.path_join(
         EL_FORKMON_CONFIG_MOUNT_DIRPATH_ON_SERVICE, EL_FORKMON_CONFIG_FILENAME
     )
@@ -62,6 +72,11 @@ def get_config(config_files_artifact_name):
             EL_FORKMON_CONFIG_MOUNT_DIRPATH_ON_SERVICE: config_files_artifact_name,
         },
         cmd=[config_file_path],
+        min_cpu=MIN_CPU,
+        max_cpu=MAX_CPU,
+        min_memory=MIN_MEMORY,
+        max_memory=MAX_MEMORY,
+        node_selectors=node_selectors,
     )
 
 

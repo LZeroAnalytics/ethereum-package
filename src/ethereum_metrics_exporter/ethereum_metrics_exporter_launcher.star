@@ -9,13 +9,20 @@ METRICS_PORT_NUMBER = 9090
 
 DEFAULT_ETHEREUM_METRICS_EXPORTER_IMAGE = "ethpandaops/ethereum-metrics-exporter:0.22.0"
 
+# The min/max CPU/memory that ethereum-metrics-exporter can use
+MIN_CPU = 10
+MAX_CPU = 100
+MIN_MEMORY = 16
+MAX_MEMORY = 128
+
 
 def launch(
     plan,
     pair_name,
     ethereum_metrics_exporter_service_name,
-    el_client_context,
-    cl_client_context,
+    el_context,
+    cl_context,
+    node_selectors,
 ):
     exporter_service = plan.add_service(
         ethereum_metrics_exporter_service_name,
@@ -32,16 +39,20 @@ def launch(
                 "--metrics-port",
                 str(METRICS_PORT_NUMBER),
                 "--consensus-url",
-                "http://{}:{}".format(
-                    cl_client_context.ip_addr,
-                    cl_client_context.http_port_num,
+                "{0}".format(
+                    cl_context.beacon_http_url,
                 ),
                 "--execution-url",
                 "http://{}:{}".format(
-                    el_client_context.ip_addr,
-                    el_client_context.rpc_port_num,
+                    el_context.ip_addr,
+                    el_context.rpc_port_num,
                 ),
             ],
+            min_cpu=MIN_CPU,
+            max_cpu=MAX_CPU,
+            min_memory=MIN_MEMORY,
+            max_memory=MAX_MEMORY,
+            node_selectors=node_selectors,
         ),
     )
 
@@ -49,6 +60,6 @@ def launch(
         pair_name,
         exporter_service.ip_address,
         METRICS_PORT_NUMBER,
-        cl_client_context.client_name,
-        el_client_context.client_name,
+        cl_context.client_name,
+        el_context.client_name,
     )

@@ -1,20 +1,19 @@
 shared_utils = import_module("../../shared_utils/shared_utils.star")
 input_parser = import_module("../../package_io/input_parser.star")
-cl_client_context = import_module("../../cl/cl_client_context.star")
+cl_context = import_module("../../cl/cl_context.star")
 node_metrics = import_module("../../node_metrics_info.star")
 cl_node_ready_conditions = import_module("../../cl/cl_node_ready_conditions.star")
-
 constants = import_module("../../package_io/constants.star")
 
-LIGHTHOUSE_BINARY_COMMAND = "lighthouse"
+blobber_launcher = import_module("../../blobber/blobber_launcher.star")
 
-VALIDATOR_KEYS_MOUNTPOINT_ON_CLIENTS = "/validator-keys"
+LIGHTHOUSE_BINARY_COMMAND = "lighthouse"
 
 RUST_BACKTRACE_ENVVAR_NAME = "RUST_BACKTRACE"
 RUST_FULL_BACKTRACE_KEYWORD = "full"
 
 #  ---------------------------------- Beacon client -------------------------------------
-CONSENSUS_DATA_DIRPATH_ON_BEACON_SERVICE_CONTAINER = "/consensus-data"
+BEACON_DATA_DIRPATH_ON_BEACON_SERVICE_CONTAINER = "/data/lighthouse/beacon-data"
 
 # Port IDs
 BEACON_TCP_DISCOVERY_PORT_ID = "tcp-discovery"
@@ -29,25 +28,9 @@ BEACON_METRICS_PORT_NUM = 5054
 
 # The min/max CPU/memory that the beacon node can use
 BEACON_MIN_CPU = 50
-BEACON_MAX_CPU = 1000
 BEACON_MIN_MEMORY = 256
-BEACON_MAX_MEMORY = 1024
-
-#  ---------------------------------- Validator client -------------------------------------
-VALIDATOR_HTTP_PORT_ID = "http"
-VALIDATOR_METRICS_PORT_ID = "metrics"
-VALIDATOR_HTTP_PORT_NUM = 5042
-VALIDATOR_METRICS_PORT_NUM = 5064
-VALIDATOR_HTTP_PORT_WAIT_DISABLED = None
 
 METRICS_PATH = "/metrics"
-VALIDATOR_SUFFIX_SERVICE_NAME = "validator"
-
-# The min/max CPU/memory that the validator node can use
-VALIDATOR_MIN_CPU = 50
-VALIDATOR_MAX_CPU = 300
-VALIDATOR_MIN_MEMORY = 128
-VALIDATOR_MAX_MEMORY = 512
 
 PRIVATE_IP_ADDRESS_PLACEHOLDER = "KURTOSIS_IP_ADDR_PLACEHOLDER"
 
@@ -70,26 +53,12 @@ BEACON_USED_PORTS = {
     ),
 }
 
-VALIDATOR_USED_PORTS = {
-    VALIDATOR_HTTP_PORT_ID: shared_utils.new_port_spec(
-        VALIDATOR_HTTP_PORT_NUM,
-        shared_utils.TCP_PROTOCOL,
-        shared_utils.NOT_PROVIDED_APPLICATION_PROTOCOL,
-        VALIDATOR_HTTP_PORT_WAIT_DISABLED,
-    ),
-    VALIDATOR_METRICS_PORT_ID: shared_utils.new_port_spec(
-        VALIDATOR_METRICS_PORT_NUM,
-        shared_utils.TCP_PROTOCOL,
-        shared_utils.HTTP_APPLICATION_PROTOCOL,
-    ),
-}
-
-LIGHTHOUSE_LOG_LEVELS = {
-    constants.GLOBAL_CLIENT_LOG_LEVEL.error: "error",
-    constants.GLOBAL_CLIENT_LOG_LEVEL.warn: "warn",
-    constants.GLOBAL_CLIENT_LOG_LEVEL.info: "info",
-    constants.GLOBAL_CLIENT_LOG_LEVEL.debug: "debug",
-    constants.GLOBAL_CLIENT_LOG_LEVEL.trace: "trace",
+VERBOSITY_LEVELS = {
+    constants.GLOBAL_LOG_LEVEL.error: "error",
+    constants.GLOBAL_LOG_LEVEL.warn: "warn",
+    constants.GLOBAL_LOG_LEVEL.info: "info",
+    constants.GLOBAL_LOG_LEVEL.debug: "debug",
+    constants.GLOBAL_LOG_LEVEL.trace: "trace",
 }
 
 
@@ -101,84 +70,111 @@ def launch(
     participant_log_level,
     global_log_level,
     bootnode_contexts,
-    el_client_context,
+    el_context,
+    full_name,
     node_keystore_files,
-    bn_min_cpu,
-    bn_max_cpu,
-    bn_min_mem,
-    bn_max_mem,
-    v_min_cpu,
-    v_max_cpu,
-    v_min_mem,
-    v_max_mem,
+    cl_min_cpu,
+    cl_max_cpu,
+    cl_min_mem,
+    cl_max_mem,
     snooper_enabled,
     snooper_engine_context,
-    extra_beacon_params,
-    extra_validator_params,
+    blobber_enabled,
+    blobber_extra_params,
+    extra_params,
+    extra_env_vars,
+    extra_labels,
+    persistent,
+    cl_volume_size,
+    cl_tolerations,
+    participant_tolerations,
+    global_tolerations,
+    node_selectors,
+    use_separate_vc=True,
+    keymanager_enabled=False,
 ):
-    beacon_node_service_name = "{0}".format(service_name)
-    validator_node_service_name = "{0}-{1}".format(
-        service_name, VALIDATOR_SUFFIX_SERVICE_NAME
-    )
+    beacon_service_name = "{0}".format(service_name)
 
     log_level = input_parser.get_client_log_level_or_default(
-        participant_log_level, global_log_level, LIGHTHOUSE_LOG_LEVELS
+        participant_log_level, global_log_level, VERBOSITY_LEVELS
     )
 
-    bn_min_cpu = int(bn_min_cpu) if int(bn_min_cpu) > 0 else BEACON_MIN_CPU
-    bn_max_cpu = int(bn_max_cpu) if int(bn_max_cpu) > 0 else BEACON_MAX_CPU
-    bn_min_mem = int(bn_min_mem) if int(bn_min_mem) > 0 else BEACON_MIN_MEMORY
-    bn_max_mem = int(bn_max_mem) if int(bn_max_mem) > 0 else BEACON_MAX_MEMORY
+    tolerations = input_parser.get_client_tolerations(
+        cl_tolerations, participant_tolerations, global_tolerations
+    )
+
+    network_name = shared_utils.get_network_name(launcher.network)
+
+    cl_min_cpu = int(cl_min_cpu) if int(cl_min_cpu) > 0 else BEACON_MIN_CPU
+    cl_max_cpu = (
+        int(cl_max_cpu)
+        if int(cl_max_cpu) > 0
+        else constants.RAM_CPU_OVERRIDES[network_name]["lighthouse_max_cpu"]
+    )
+    cl_min_mem = int(cl_min_mem) if int(cl_min_mem) > 0 else BEACON_MIN_MEMORY
+    cl_max_mem = (
+        int(cl_max_mem)
+        if int(cl_max_mem) > 0
+        else constants.RAM_CPU_OVERRIDES[network_name]["lighthouse_max_mem"]
+    )
+
+    cl_volume_size = (
+        int(cl_volume_size)
+        if int(cl_volume_size) > 0
+        else constants.VOLUME_SIZE[network_name]["lighthouse_volume_size"]
+    )
 
     # Launch Beacon node
     beacon_config = get_beacon_config(
-        service_name,
+        plan,
         launcher.el_cl_genesis_data,
+        launcher.jwt_file,
+        launcher.network,
         image,
+        beacon_service_name,
         bootnode_contexts,
-        el_client_context,
+        el_context,
         log_level,
-        bn_min_cpu,
-        bn_max_cpu,
-        bn_min_mem,
-        bn_max_mem,
+        cl_min_cpu,
+        cl_max_cpu,
+        cl_min_mem,
+        cl_max_mem,
         snooper_enabled,
         snooper_engine_context,
-        extra_beacon_params,
+        extra_params,
+        extra_env_vars,
+        extra_labels,
+        persistent,
+        cl_volume_size,
+        tolerations,
+        node_selectors,
     )
 
-    beacon_service = plan.add_service(beacon_node_service_name, beacon_config)
+    beacon_service = plan.add_service(beacon_service_name, beacon_config)
     beacon_http_port = beacon_service.ports[BEACON_HTTP_PORT_ID]
     beacon_http_url = "http://{0}:{1}".format(
         beacon_service.ip_address, beacon_http_port.number
     )
 
-    # Launch validator node if we have a keystore
-    validator_service = None
-    if node_keystore_files != None:
-        v_min_cpu = int(v_min_cpu) if int(v_min_cpu) > 0 else VALIDATOR_MIN_CPU
-        v_max_cpu = int(v_max_cpu) if int(v_max_cpu) > 0 else VALIDATOR_MAX_CPU
-        v_min_mem = int(v_min_mem) if int(v_min_mem) > 0 else VALIDATOR_MIN_MEMORY
-        v_max_mem = int(v_max_mem) if int(v_max_mem) > 0 else VALIDATOR_MAX_MEMORY
-
-        validator_config = get_validator_config(
-            service_name,
-            launcher.el_cl_genesis_data,
-            image,
-            log_level,
-            beacon_http_url,
-            el_client_context,
+    # Blobber config
+    if blobber_enabled:
+        blobber_service_name = "{0}-{1}".format("blobber", beacon_service_name)
+        blobber_config = blobber_launcher.get_config(
+            blobber_service_name,
             node_keystore_files,
-            v_min_cpu,
-            v_max_cpu,
-            v_min_mem,
-            v_max_mem,
-            extra_validator_params,
+            beacon_http_url,
+            blobber_extra_params,
+            node_selectors,
         )
 
-        validator_service = plan.add_service(
-            validator_node_service_name, validator_config
+        blobber_service = plan.add_service(blobber_service_name, blobber_config)
+        blobber_http_port = blobber_service.ports[
+            blobber_launcher.BLOBBER_VALIDATOR_PROXY_PORT_ID
+        ]
+        blobber_http_url = "http://{0}:{1}".format(
+            blobber_service.ip_address, blobber_http_port.number
         )
+        beacon_http_url = blobber_http_url
 
     # TODO(old) add validator availability using the validator API: https://ethereum.github.io/beacon-APIs/?urls.primaryName=v1#/ValidatorRequiredApi | from eth2-merge-kurtosis-module
     beacon_node_identity_recipe = GetHttpRequestRecipe(
@@ -186,12 +182,12 @@ def launch(
         port_id=BEACON_HTTP_PORT_ID,
         extract={
             "enr": ".data.enr",
-            "multiaddr": ".data.discovery_addresses[0]",
+            "multiaddr": ".data.p2p_addresses[0]",
             "peer_id": ".data.peer_id",
         },
     )
     response = plan.request(
-        recipe=beacon_node_identity_recipe, service_name=beacon_node_service_name
+        recipe=beacon_node_identity_recipe, service_name=beacon_service_name
     )
     beacon_node_enr = response["extract.enr"]
     beacon_multiaddr = response["extract.multiaddr"]
@@ -202,49 +198,50 @@ def launch(
         beacon_service.ip_address, beacon_metrics_port.number
     )
     beacon_node_metrics_info = node_metrics.new_node_metrics_info(
-        beacon_node_service_name, METRICS_PATH, beacon_metrics_url
+        beacon_service_name, METRICS_PATH, beacon_metrics_url
     )
     nodes_metrics_info = [beacon_node_metrics_info]
-
-    if validator_service:
-        validator_metrics_port = validator_service.ports[VALIDATOR_METRICS_PORT_ID]
-        validator_metrics_url = "{0}:{1}".format(
-            validator_service.ip_address, validator_metrics_port.number
-        )
-        validator_node_metrics_info = node_metrics.new_node_metrics_info(
-            validator_node_service_name, METRICS_PATH, validator_metrics_url
-        )
-        nodes_metrics_info.append(validator_node_metrics_info)
-
-    return cl_client_context.new_cl_client_context(
+    return cl_context.new_cl_context(
         "lighthouse",
         beacon_node_enr,
         beacon_service.ip_address,
-        BEACON_HTTP_PORT_NUM,
+        beacon_http_port.number,
+        beacon_http_url,
         nodes_metrics_info,
-        beacon_node_service_name,
-        validator_node_service_name,
+        beacon_service_name,
         beacon_multiaddr,
         beacon_peer_id,
         snooper_enabled,
         snooper_engine_context,
+        validator_keystore_files_artifact_uuid=node_keystore_files.files_artifact_uuid
+        if node_keystore_files
+        else "",
     )
 
 
 def get_beacon_config(
-    service_name,
+    plan,
     el_cl_genesis_data,
+    jwt_file,
+    network,
     image,
+    service_name,
     boot_cl_client_ctxs,
-    el_client_context,
+    el_context,
     log_level,
-    bn_min_cpu,
-    bn_max_cpu,
-    bn_min_mem,
-    bn_max_mem,
+    cl_min_cpu,
+    cl_max_cpu,
+    cl_min_mem,
+    cl_max_mem,
     snooper_enabled,
     snooper_engine_context,
     extra_params,
+    extra_env_vars,
+    extra_labels,
+    persistent,
+    cl_volume_size,
+    tolerations,
+    node_selectors,
 ):
     # If snooper is enabled use the snooper engine context, otherwise use the execution client context
     if snooper_enabled:
@@ -254,8 +251,8 @@ def get_beacon_config(
         )
     else:
         EXECUTION_ENGINE_ENDPOINT = "http://{0}:{1}".format(
-            el_client_context.ip_addr,
-            el_client_context.engine_rpc_port_num,
+            el_context.ip_addr,
+            el_context.engine_rpc_port_num,
         )
 
     # NOTE: If connecting to the merge devnet remotely we DON'T want the following flags; when they're not set, the node's external IP address is auto-detected
@@ -270,8 +267,7 @@ def get_beacon_config(
         LIGHTHOUSE_BINARY_COMMAND,
         "beacon_node",
         "--debug-level=" + log_level,
-        "--datadir=" + CONSENSUS_DATA_DIRPATH_ON_BEACON_SERVICE_CONTAINER,
-        "--testnet-dir=" + constants.GENESIS_CONFIG_MOUNT_PATH_ON_CONTAINER,
+        "--datadir=" + BEACON_DATA_DIRPATH_ON_BEACON_SERVICE_CONTAINER,
         # vvvvvvvvvvvvvvvvvvv REMOVE THESE WHEN CONNECTING TO EXTERNAL NET vvvvvvvvvvvvvvvvvvvvv
         "--disable-enr-auto-update",
         "--enr-address=" + PRIVATE_IP_ADDRESS_PLACEHOLDER,
@@ -292,7 +288,7 @@ def get_beacon_config(
         # and the option says it's "useful for testing in smaller networks" (unclear what happens in larger networks)
         "--disable-packet-filter",
         "--execution-endpoints=" + EXECUTION_ENGINE_ENDPOINT,
-        "--jwt-secrets=" + constants.JWT_AUTH_PATH,
+        "--jwt-secrets=" + constants.JWT_MOUNT_PATH_ON_CONTAINER,
         "--suggested-fee-recipient=" + constants.VALIDATING_REWARDS_ACCOUNT,
         # Set per Paris' recommendation to reduce noise in the logs
         "--subscribe-all-subnets",
@@ -302,24 +298,54 @@ def get_beacon_config(
         "--metrics-allow-origin=*",
         "--metrics-port={0}".format(BEACON_METRICS_PORT_NUM),
         # ^^^^^^^^^^^^^^^^^^^ METRICS CONFIG ^^^^^^^^^^^^^^^^^^^^^
+        # Enable this flag once we have https://github.com/sigp/lighthouse/issues/5054 fixed
+        # "--allow-insecure-genesis-sync",
+        "--enable-private-discovery",
     ]
 
-    if boot_cl_client_ctxs != None:
-        cmd.append(
-            "--boot-nodes="
-            + ",".join(
-                [ctx.enr for ctx in boot_cl_client_ctxs[: constants.MAX_ENR_ENTRIES]]
+    if network not in constants.PUBLIC_NETWORKS:
+        cmd.append("--testnet-dir=" + constants.GENESIS_CONFIG_MOUNT_PATH_ON_CONTAINER)
+        if (
+            network == constants.NETWORK_NAME.kurtosis
+            or constants.NETWORK_NAME.shadowfork in network
+        ):
+            if boot_cl_client_ctxs != None:
+                cmd.append(
+                    "--boot-nodes="
+                    + ",".join(
+                        [
+                            ctx.enr
+                            for ctx in boot_cl_client_ctxs[: constants.MAX_ENR_ENTRIES]
+                        ]
+                    )
+                )
+        elif network == constants.NETWORK_NAME.ephemery:
+            cmd.append(
+                "--checkpoint-sync-url=" + constants.CHECKPOINT_SYNC_URL[network]
             )
-        )
-        cmd.append(
-            "--trusted-peers="
-            + ",".join(
-                [
-                    ctx.peer_id
-                    for ctx in boot_cl_client_ctxs[: constants.MAX_ENR_ENTRIES]
-                ]
+            cmd.append(
+                "--boot-nodes="
+                + shared_utils.get_devnet_enrs_list(
+                    plan, el_cl_genesis_data.files_artifact_uuid
+                )
             )
-        )
+        else:  # Devnets
+            # TODO Remove once checkpoint sync is working for verkle
+            if constants.NETWORK_NAME.verkle not in network:
+                cmd.append(
+                    "--checkpoint-sync-url=https://checkpoint-sync.{0}.ethpandaops.io".format(
+                        network
+                    )
+                )
+            cmd.append(
+                "--boot-nodes="
+                + shared_utils.get_devnet_enrs_list(
+                    plan, el_cl_genesis_data.files_artifact_uuid
+                )
+            )
+    else:  # Public networks
+        cmd.append("--network=" + network)
+        cmd.append("--checkpoint-sync-url=" + constants.CHECKPOINT_SYNC_URL[network])
 
     if len(extra_params) > 0:
         # this is a repeated<proto type>, we convert it into Starlark
@@ -328,109 +354,47 @@ def get_beacon_config(
     recipe = GetHttpRequestRecipe(
         endpoint="/eth/v1/node/identity", port_id=BEACON_HTTP_PORT_ID
     )
+    files = {
+        constants.GENESIS_DATA_MOUNTPOINT_ON_CLIENTS: el_cl_genesis_data.files_artifact_uuid,
+        constants.JWT_MOUNTPOINT_ON_CLIENTS: jwt_file,
+    }
 
+    if persistent:
+        files[BEACON_DATA_DIRPATH_ON_BEACON_SERVICE_CONTAINER] = Directory(
+            persistent_key="data-{0}".format(service_name),
+            size=cl_volume_size,
+        )
+    env = {RUST_BACKTRACE_ENVVAR_NAME: RUST_FULL_BACKTRACE_KEYWORD}
+    env.update(extra_env_vars)
     return ServiceConfig(
         image=image,
         ports=BEACON_USED_PORTS,
         cmd=cmd,
-        files={
-            constants.GENESIS_DATA_MOUNTPOINT_ON_CLIENTS: el_cl_genesis_data.files_artifact_uuid
-        },
-        env_vars={RUST_BACKTRACE_ENVVAR_NAME: RUST_FULL_BACKTRACE_KEYWORD},
+        files=files,
+        env_vars=env,
         private_ip_address_placeholder=PRIVATE_IP_ADDRESS_PLACEHOLDER,
         ready_conditions=cl_node_ready_conditions.get_ready_conditions(
             BEACON_HTTP_PORT_ID
         ),
-        min_cpu=bn_min_cpu,
-        max_cpu=bn_max_cpu,
-        min_memory=bn_min_mem,
-        max_memory=bn_max_mem,
+        min_cpu=cl_min_cpu,
+        max_cpu=cl_max_cpu,
+        min_memory=cl_min_mem,
+        max_memory=cl_max_mem,
         labels=shared_utils.label_maker(
-            service_name,
-            constants.CL_CLIENT_TYPE.lighthouse,
+            constants.CL_TYPE.lighthouse,
             constants.CLIENT_TYPES.cl,
             image,
-            el_client_context.client_name,
+            el_context.client_name,
+            extra_labels,
         ),
+        tolerations=tolerations,
+        node_selectors=node_selectors,
     )
 
 
-def get_validator_config(
-    service_name,
-    el_cl_genesis_data,
-    image,
-    log_level,
-    beacon_client_http_url,
-    el_client_context,
-    node_keystore_files,
-    v_min_cpu,
-    v_max_cpu,
-    v_min_mem,
-    v_max_mem,
-    extra_params,
-):
-    validator_keys_dirpath = shared_utils.path_join(
-        VALIDATOR_KEYS_MOUNTPOINT_ON_CLIENTS,
-        node_keystore_files.raw_keys_relative_dirpath,
-    )
-    validator_secrets_dirpath = shared_utils.path_join(
-        VALIDATOR_KEYS_MOUNTPOINT_ON_CLIENTS,
-        node_keystore_files.raw_secrets_relative_dirpath,
-    )
-
-    cmd = [
-        "lighthouse",
-        "validator_client",
-        "--debug-level=" + log_level,
-        "--testnet-dir=" + constants.GENESIS_CONFIG_MOUNT_PATH_ON_CONTAINER,
-        "--validators-dir=" + validator_keys_dirpath,
-        # NOTE: When secrets-dir is specified, we can't add the --data-dir flag
-        "--secrets-dir=" + validator_secrets_dirpath,
-        # The node won't have a slashing protection database and will fail to start otherwise
-        "--init-slashing-protection",
-        "--http",
-        "--unencrypted-http-transport",
-        "--http-address=0.0.0.0",
-        "--http-port={0}".format(VALIDATOR_HTTP_PORT_NUM),
-        "--beacon-nodes=" + beacon_client_http_url,
-        # "--enable-doppelganger-protection", // Disabled to not have to wait 2 epochs before validator can start
-        # burn address - If unset, the validator will scream in its logs
-        "--suggested-fee-recipient=" + constants.VALIDATING_REWARDS_ACCOUNT,
-        # vvvvvvvvvvvvvvvvvvv PROMETHEUS CONFIG vvvvvvvvvvvvvvvvvvvvv
-        "--metrics",
-        "--metrics-address=0.0.0.0",
-        "--metrics-allow-origin=*",
-        "--metrics-port={0}".format(VALIDATOR_METRICS_PORT_NUM),
-        # ^^^^^^^^^^^^^^^^^^^ PROMETHEUS CONFIG ^^^^^^^^^^^^^^^^^^^^^
-    ]
-
-    if len(extra_params):
-        cmd.extend([param for param in extra_params])
-
-    return ServiceConfig(
-        image=image,
-        ports=VALIDATOR_USED_PORTS,
-        cmd=cmd,
-        files={
-            constants.GENESIS_DATA_MOUNTPOINT_ON_CLIENTS: el_cl_genesis_data.files_artifact_uuid,
-            VALIDATOR_KEYS_MOUNTPOINT_ON_CLIENTS: node_keystore_files.files_artifact_uuid,
-        },
-        env_vars={RUST_BACKTRACE_ENVVAR_NAME: RUST_FULL_BACKTRACE_KEYWORD},
-        min_cpu=v_min_cpu,
-        max_cpu=v_max_cpu,
-        min_memory=v_min_mem,
-        max_memory=v_max_mem,
-        labels=shared_utils.label_maker(
-            service_name,
-            constants.CL_CLIENT_TYPE.lighthouse,
-            constants.CLIENT_TYPES.validator,
-            image,
-            el_client_context.client_name,
-        ),
-    )
-
-
-def new_lighthouse_launcher(el_cl_genesis_data):
+def new_lighthouse_launcher(el_cl_genesis_data, jwt_file, network):
     return struct(
         el_cl_genesis_data=el_cl_genesis_data,
+        jwt_file=jwt_file,
+        network=network,
     )

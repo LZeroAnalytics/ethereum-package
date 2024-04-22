@@ -1,44 +1,78 @@
 participants:
-  - el_client_type: geth
-    el_client_image: ethereum/client-go:latest
-    el_client_log_level: ''
+# EL
+  - el_type: geth
+    el_image: ethereum/client-go:latest
+    el_log_level: ""
+    el_extra_env_vars: {}
+    el_extra_labels: {}
     el_extra_params: []
-    cl_client_type: lighthouse
-    cl_client_image: sigp/lighthouse:latest
-    cl_client_log_level: ''
-    beacon_extra_params: []
-    validator_extra_params: []
-    builder_network_params: null
+    el_tolerations: []
+    el_volume_size: 0
+    el_min_cpu: 0
+    el_max_cpu: 0
+    el_min_mem: 0
+    el_max_mem: 0
+# CL
+    cl_type: lighthouse
+    cl_image: sigp/lighthouse:latest
+    cl_log_level: ""
+    cl_extra_env_vars: {}
+    cl_extra_labels: {}
+    cl_extra_params: []
+    cl_tolerations: []
+    cl_volume_size: 0
+    cl_min_cpu: 0
+    cl_max_cpu: 0
+    cl_min_mem: 0
+    cl_max_mem: 0
+    use_separate_vc: true
+# Validator
+    vc_type: lighthouse
+    vc_image: sigp/lighthouse:latest
+    vc_log_level: ""
+    vc_extra_env_vars: {}
+    vc_extra_labels: {}
+    vc_extra_params: []
+    vc_tolerations: []
+    vc_min_cpu: 0
+    vc_max_cpu: 0
+    vc_min_mem: 0
+    vc_max_mem: 0
     validator_count: null
+# participant specific
+    node_selectors: {}
+    tolerations: []
+    count: 2
     snooper_enabled: false
     ethereum_metrics_exporter_enabled: false
-    el_min_cpu: ''
-    el_max_cpu: ''
-    el_min_mem: ''
-    el_max_mem: ''
-    bn_min_cpu: ''
-    bn_max_cpu: ''
-    bn_min_mem: ''
-    bn_max_mem: ''
-    v_min_cpu: ''
-    v_max_cpu: ''
-    v_min_mem: ''
-    v_max_mem: ''
-    count: 2
+    xatu_sentry_enabled: false
+    prometheus_config:
+      scrape_interval: 15s
+      labels: {}
+    blobber_enabled: false
+    blobber_extra_params: []
+    builder_network_params: null
+    keymanager_enabled: false
 network_params:
-  network_id: '3151908'
-  deposit_contract_address: '0x4242424242424242424242424242424242424242'
+  network: kurtosis
+  network_id: "3151908"
+  deposit_contract_address: "0x4242424242424242424242424242424242424242"
   seconds_per_slot: 12
   num_validator_keys_per_node: 64
-  preregistered_validator_keys_mnemonic: 'giant issue aisle success illegal bike spike
+  preregistered_validator_keys_mnemonic:
+    "giant issue aisle success illegal bike spike
     question tent bar rely arctic volcano long crawl hungry vocal artwork sniff fantasy
-    very lucky have athlete'
-  genesis_delay: 120
+    very lucky have athlete"
+  preregistered_validator_count: 0
+  genesis_delay: 20
   max_churn: 8
   ejection_balance: 16000000000
-  capella_fork_epoch: 0
-  deneb_fork_epoch: 4
-  electra_fork_epoch: null
+  eth1_follow_distance: 2048
+  min_validator_withdrawability_delay: 256
+  shard_committee_period: 256
+  deneb_fork_epoch: 0
+  electra_fork_epoch: 500
+  network_sync_base_url: https://ethpandaops-ethereum-node-snapshots.ams3.digitaloceanspaces.com/
 additional_services:
   - tx_spammer
   - blob_spammer
@@ -46,19 +80,61 @@ additional_services:
   - beacon_metrics_gazer
   - dora
   - prometheus_grafana
+tx_spammer_params:
+  tx_spammer_extra_args: []
+goomy_blob_params:
+  goomy_blob_args: []
+assertoor_params:
+  image: ""
+  run_stability_check: true
+  run_block_proposal_check: true
+  run_transaction_test: false
+  run_blob_transaction_test: false
+  run_opcodes_transaction_test: false
+  run_lifecycle_test: false
+  tests: []
 wait_for_finalization: false
-global_client_log_level: info
+global_log_level: info
 snooper_enabled: false
 ethereum_metrics_exporter_enabled: false
 parallel_keystore_generation: false
+disable_peer_scoring: false
+grafana_additional_dashboards: []
+persistent: false
 mev_type: null
 mev_params:
   mev_relay_image: flashbots/mev-boost-relay
+  mev_builder_image: ethpandaops/flashbots-builder:main
+  mev_builder_cl_image: sigp/lighthouse:latest
+  mev_boost_image: flashbots/mev-boost
+  mev_boost_args: ["mev-boost", "--relay-check"]
   mev_relay_api_extra_args: []
   mev_relay_housekeeper_extra_args: []
   mev_relay_website_extra_args: []
   mev_builder_extra_args: []
+  mev_builder_prometheus_config:
+    scrape_interval: 15s
+    labels: {}
   mev_flood_image: flashbots/mev-flood
   mev_flood_extra_args: []
   mev_flood_seconds_per_bundle: 15
-grafana_additional_dashboards: []
+  custom_flood_params:
+    interval_between_transactions: 1
+xatu_sentry_enabled: false
+xatu_sentry_params:
+  xatu_sentry_image: ethpandaops/xatu-sentry
+  xatu_server_addr: localhost:8000
+  xatu_server_tls: false
+  xatu_server_headers: {}
+  beacon_subscriptions:
+    - attestation
+    - block
+    - chain_reorg
+    - finalized_checkpoint
+    - head
+    - voluntary_exit
+    - contribution_and_proof
+    - blob_sidecar
+global_tolerations: []
+global_node_selectors: {}
+keymanager_enabled: false

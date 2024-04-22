@@ -24,11 +24,22 @@ USED_PORTS = {
     )
 }
 
+# The min/max CPU/memory that beacon-metrics-gazer can use
+MIN_CPU = 10
+MAX_CPU = 500
+MIN_MEMORY = 20
+MAX_MEMORY = 300
 
-def launch_beacon_metrics_gazer(plan, cl_client_contexts, network_params):
+
+def launch_beacon_metrics_gazer(
+    plan,
+    cl_contexts,
+    network_params,
+    global_node_selectors,
+):
     config = get_config(
-        cl_client_contexts[0].ip_addr,
-        cl_client_contexts[0].http_port_num,
+        cl_contexts[0].beacon_http_url,
+        global_node_selectors,
     )
 
     beacon_metrics_gazer_service = plan.add_service(SERVICE_NAME, config)
@@ -45,7 +56,7 @@ def launch_beacon_metrics_gazer(plan, cl_client_contexts, network_params):
     )
 
 
-def get_config(ip_addr, http_port_num):
+def get_config(beacon_http_url, node_selectors):
     config_file_path = shared_utils.path_join(
         BEACON_METRICS_GAZER_CONFIG_MOUNT_DIRPATH_ON_SERVICE,
         BEACON_METRICS_GAZER_CONFIG_FILENAME,
@@ -57,7 +68,7 @@ def get_config(ip_addr, http_port_num):
             BEACON_METRICS_GAZER_CONFIG_MOUNT_DIRPATH_ON_SERVICE: VALIDATOR_RANGES_ARTIFACT_NAME,
         },
         cmd=[
-            "http://{0}:{1}".format(ip_addr, http_port_num),
+            "{0}".format(beacon_http_url),
             "--ranges-file",
             config_file_path,
             "--port",
@@ -66,4 +77,9 @@ def get_config(ip_addr, http_port_num):
             "0.0.0.0",
             "-v",
         ],
+        min_cpu=MIN_CPU,
+        max_cpu=MAX_CPU,
+        min_memory=MIN_MEMORY,
+        max_memory=MAX_MEMORY,
+        node_selectors=node_selectors,
     )
