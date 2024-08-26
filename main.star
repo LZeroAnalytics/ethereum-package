@@ -691,4 +691,6 @@ def run(plan, args={}):
         genesis_validators_root=genesis_validators_root,
     )
 
+    plan.print(prefunded_accounts)
+
     return output
