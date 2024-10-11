@@ -59,7 +59,7 @@ def launch(plan, network_params, participants, parallel_keystore_generation):
     # we are running deneb genesis - default behavior
     elif network_params.deneb_fork_epoch == 0:
         ethereum_genesis_generator_image = (
-            constants.ETHEREUM_GENESIS_GENERATOR.ssv_genesis
+            constants.ETHEREUM_GENESIS_GENERATOR.deneb_genesis
         )
     # we are running electra - experimental
     elif network_params.electra_fork_epoch != None:
