@@ -54,6 +54,7 @@ assertoor = import_module("./src/assertoor/assertoor_launcher.star")
 get_prefunded_accounts = import_module(
     "./src/prefunded_accounts/get_prefunded_accounts.star"
 )
+faucet = import_module("./src/faucet/faucet_launcher.star")
 
 GRAFANA_USER = "admin"
 GRAFANA_PASSWORD = "admin"
@@ -626,6 +627,14 @@ def run(plan, args={}):
                 fuzz_target,
                 args_with_right_defaults.custom_flood_params,
                 global_node_selectors,
+            )
+        elif additional_service == "faucet":
+            faucet.launch_faucet(
+                plan,
+                network_id,
+                prefunded_accounts[0].private_key,
+                all_participants[0].el_context.ip_addr,
+                all_participants[0].el_context.rpc_port_num,
             )
         else:
             fail("Invalid additional service %s" % (additional_service))
