@@ -25,6 +25,7 @@ participants:
     cl_max_cpu: 0
     cl_min_mem: 0
     cl_max_mem: 0
+    supernode: false
     use_separate_vc: true
 # Validator
     vc_type: lighthouse
@@ -40,6 +41,18 @@ participants:
     vc_min_mem: 0
     vc_max_mem: 0
     validator_count: null
+    use_remote_signer: false
+# Remote signer
+    remote_signer_type: web3signer
+    remote_signer_image: consensys/web3signer:latest
+    remote_signer_extra_env_vars: {}
+    remote_signer_extra_labels: {}
+    remote_signer_extra_params: []
+    remote_signer_tolerations: []
+    remote_signer_min_cpu: 0
+    remote_signer_max_cpu: 0
+    remote_signer_min_mem: 0
+    remote_signer_max_mem: 0
 # participant specific
     node_selectors: {}
     tolerations: []
@@ -93,6 +106,19 @@ tx_spammer_params:
   tx_spammer_extra_args: []
 goomy_blob_params:
   goomy_blob_args: []
+prometheus_params:
+  storage_tsdb_retention_time: "1d"
+  storage_tsdb_retention_size: "512MB"
+  min_cpu: 10
+  max_cpu: 1000
+  min_mem: 128
+  max_mem: 2048
+grafana_params:
+  additional_dashboards: []
+  min_cpu: 10
+  max_cpu: 1000
+  min_mem: 128
+  max_mem: 2048
 assertoor_params:
   image: ""
   run_stability_check: false
@@ -108,7 +134,6 @@ snooper_enabled: false
 ethereum_metrics_exporter_enabled: false
 parallel_keystore_generation: false
 disable_peer_scoring: false
-grafana_additional_dashboards: []
 persistent: false
 mev_type: null
 mev_params:
@@ -161,6 +186,9 @@ port_publisher:
   vc:
     enabled: false
     public_port_start: 34000
-  additional_services:
+  remote_signer:
     enabled: false
     public_port_start: 35000
+  additional_services:
+    enabled: false
+    public_port_start: 36000

@@ -9,6 +9,7 @@ NOT_PROVIDED_WAIT = "not-provided-wait"
 MAX_PORTS_PER_CL_NODE = 5
 MAX_PORTS_PER_EL_NODE = 5
 MAX_PORTS_PER_VC_NODE = 3
+MAX_PORTS_PER_REMOTE_SIGNER_NODE = 2
 MAX_PORTS_PER_ADDITIONAL_SERVICE = 2
 
 
@@ -70,7 +71,9 @@ def zfill_custom(value, width):
     return ("0" * (width - len(str(value)))) + str(value)
 
 
-def label_maker(client, client_type, image, connected_client, extra_labels):
+def label_maker(
+    client, client_type, image, connected_client, extra_labels, supernode=False
+):
     # Extract sha256 hash if present
     sha256 = ""
     if "@sha256:" in image:
@@ -86,6 +89,9 @@ def label_maker(client, client_type, image, connected_client, extra_labels):
         "ethereum-package.sha256": sha256,
         "ethereum-package.connected-client": connected_client,
     }
+
+    if supernode:
+        labels["ethereum-package.supernode"] = str(supernode)
 
     # Add extra_labels to the labels dictionary
     labels.update(extra_labels)
@@ -260,6 +266,12 @@ def get_public_ports_for_component(
             MAX_PORTS_PER_VC_NODE,
             participant_index,
         )
+    elif component == "remote-signer":
+        public_port_range = __get_port_range(
+            port_publisher_params.remote_signer_public_port_start,
+            MAX_PORTS_PER_REMOTE_SIGNER_NODE,
+            participant_index,
+        )
     elif component == "additional_services":
         public_port_range = __get_port_range(
             port_publisher_params.additional_services_public_port_start,
@@ -318,3 +330,18 @@ def get_additional_service_standard_public_port(
         )
         public_ports = get_port_specs({port_id: public_ports_for_component[port_index]})
     return public_ports
+
+
+def get_cpu_mem_resource_limits(
+    min_cpu, max_cpu, min_mem, max_mem, volume_size, network_name, client_type
+):
+    min_cpu = int(min_cpu) if int(min_cpu) > 0 else 0
+    max_cpu = int(max_cpu) if int(max_cpu) > 0 else 0
+    min_mem = int(min_mem) if int(min_mem) > 0 else 0
+    max_mem = int(max_mem) if int(max_mem) > 0 else 0
+    volume_size = (
+        int(volume_size)
+        if int(volume_size) > 0
+        else constants.VOLUME_SIZE[network_name][client_type + "_volume_size"]
+    )
+    return min_cpu, max_cpu, min_mem, max_mem, volume_size

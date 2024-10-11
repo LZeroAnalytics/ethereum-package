@@ -4,34 +4,19 @@ vc_shared = import_module("./shared.star")
 
 PRYSM_PASSWORD_MOUNT_DIRPATH_ON_SERVICE_CONTAINER = "/prysm-password"
 PRYSM_BEACON_RPC_PORT = 4000
-VALIDATOR_GRPC_PORT_NUM = 7500
-
-
-EXTRA_PORTS = {
-    constants.VALDIATOR_GRPC_PORT_ID: shared_utils.new_port_spec(
-        VALIDATOR_GRPC_PORT_NUM,
-        shared_utils.TCP_PROTOCOL,
-        shared_utils.HTTP_APPLICATION_PROTOCOL,
-    )
-}
 
 
 def get_config(
+    participant,
     el_cl_genesis_data,
     keymanager_file,
     image,
     beacon_http_url,
     cl_context,
     el_context,
+    remote_signer_context,
     full_name,
     node_keystore_files,
-    vc_min_cpu,
-    vc_max_cpu,
-    vc_min_mem,
-    vc_max_mem,
-    extra_params,
-    extra_env_vars,
-    extra_labels,
     prysm_password_relative_filepath,
     prysm_password_artifact_uuid,
     tolerations,
@@ -54,8 +39,6 @@ def get_config(
         "--chain-config-file="
         + constants.GENESIS_CONFIG_MOUNT_PATH_ON_CONTAINER
         + "/config.yaml",
-        "--wallet-dir=" + validator_keys_dirpath,
-        "--wallet-password-file=" + validator_secrets_dirpath,
         "--suggested-fee-recipient=" + constants.VALIDATING_REWARDS_ACCOUNT,
         # vvvvvvvvvvvvvvvvvvv METRICS CONFIG vvvvvvvvvvvvvvvvvvvvv
         "--disable-monitoring=false",
@@ -65,12 +48,27 @@ def get_config(
         "--graffiti=" + full_name,
     ]
 
+    if remote_signer_context == None:
+        cmd.extend(
+            [
+                "--wallet-dir=" + validator_keys_dirpath,
+                "--wallet-password-file=" + validator_secrets_dirpath,
+            ]
+        )
+    else:
+        cmd.extend(
+            [
+                "--remote-signer-url={0}".format(remote_signer_context.http_url),
+                "--remote-signer-keys={0}/api/v1/eth2/publicKeys".format(
+                    remote_signer_context.http_url
+                ),
+            ]
+        )
+
     keymanager_api_cmd = [
         "--rpc",
-        "--rpc-port={0}".format(vc_shared.VALIDATOR_HTTP_PORT_NUM),
-        "--rpc-host=0.0.0.0",
-        "--grpc-gateway-port={0}".format(VALIDATOR_GRPC_PORT_NUM),
-        "--grpc-gateway-host=0.0.0.0",
+        "--http-port={0}".format(vc_shared.VALIDATOR_HTTP_PORT_NUM),
+        "--http-host=0.0.0.0",
         "--keymanager-token-file=" + constants.KEYMANAGER_MOUNT_PATH_ON_CONTAINER,
     ]
 
@@ -82,9 +80,9 @@ def get_config(
         cmd.append("--beacon-rpc-provider=" + cl_context.beacon_grpc_url)
         cmd.append("--beacon-rest-api-provider=" + cl_context.beacon_grpc_url)
 
-    if len(extra_params) > 0:
+    if len(participant.vc_extra_params) > 0:
         # this is a repeated<proto type>, we convert it into Starlark
-        cmd.extend([param for param in extra_params])
+        cmd.extend([param for param in participant.vc_extra_params])
 
     files = {
         constants.GENESIS_DATA_MOUNTPOINT_ON_CLIENTS: el_cl_genesis_data.files_artifact_uuid,
@@ -117,30 +115,36 @@ def get_config(
         files[constants.KEYMANAGER_MOUNT_PATH_ON_CLIENTS] = keymanager_file
         cmd.extend(keymanager_api_cmd)
         ports.update(vc_shared.VALIDATOR_KEYMANAGER_USED_PORTS)
-        ports.update(EXTRA_PORTS)
         public_ports.update(
             shared_utils.get_port_specs(public_keymanager_port_assignment)
         )
         public_ports.update(shared_utils.get_port_specs(public_gprc_port_assignment))
 
-    return ServiceConfig(
-        image=image,
-        ports=ports,
-        public_ports=public_ports,
-        cmd=cmd,
-        env_vars=extra_env_vars,
-        files=files,
-        min_cpu=vc_min_cpu,
-        max_cpu=vc_max_cpu,
-        min_memory=vc_min_mem,
-        max_memory=vc_max_mem,
-        labels=shared_utils.label_maker(
-            constants.VC_TYPE.prysm,
-            constants.CLIENT_TYPES.validator,
-            image,
-            cl_context.client_name,
-            extra_labels,
+    config_args = {
+        "image": image,
+        "ports": ports,
+        "public_ports": public_ports,
+        "cmd": cmd,
+        "files": files,
+        "env_vars": participant.vc_extra_env_vars,
+        "labels": shared_utils.label_maker(
+            client=constants.CL_TYPE.prysm,
+            client_type=constants.CLIENT_TYPES.validator,
+            image=image,
+            connected_client=cl_context.client_name,
+            extra_labels=participant.vc_extra_labels,
+            supernode=participant.supernode,
         ),
-        tolerations=tolerations,
-        node_selectors=node_selectors,
-    )
+        "tolerations": tolerations,
+        "node_selectors": node_selectors,
+    }
+
+    if participant.vc_min_cpu > 0:
+        config_args["min_cpu"] = participant.vc_min_cpu
+    if participant.vc_max_cpu > 0:
+        config_args["max_cpu"] = participant.vc_max_cpu
+    if participant.vc_min_mem > 0:
+        config_args["min_memory"] = participant.vc_min_mem
+    if participant.vc_max_mem > 0:
+        config_args["max_memory"] = participant.vc_max_mem
+    return ServiceConfig(**config_args)

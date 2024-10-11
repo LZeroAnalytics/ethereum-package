@@ -10,7 +10,7 @@ DEFAULT_EL_IMAGES = {
     "geth": "ethereum/client-go:latest",
     "erigon": "ethpandaops/erigon:main",
     "nethermind": "nethermindeth/nethermind:master",
-    "besu": "ethpandaops/besu:main",
+    "besu": "hyperledger/besu:latest",
     "reth": "ghcr.io/paradigmxyz/reth",
     "ethereumjs": "ethpandaops/ethereumjs:master",
     "nimbus": "ethpandaops/nimbus-eth1:master",
@@ -50,6 +50,10 @@ DEFAULT_VC_IMAGES_MINIMAL = {
     "prysm": "ethpandaops/prysm-validator:develop-minimal",
     "teku": "consensys/teku:latest",
     "grandine": "ethpandaops/grandine:master-minimal",
+}
+
+DEFAULT_REMOTE_SIGNER_IMAGES = {
+    "web3signer": "consensys/web3signer:latest",
 }
 
 # Placeholder value for the deneb fork epoch if electra is being run
@@ -95,11 +99,12 @@ def input_parser(plan, input_args):
         result["additional_services"] = DEFAULT_ADDITIONAL_SERVICES
     else:
         result["additional_services"] = []
-    result["grafana_additional_dashboards"] = []
     result["tx_spammer_params"] = get_default_tx_spammer_params()
     result["custom_flood_params"] = get_default_custom_flood_params()
     result["disable_peer_scoring"] = False
     result["goomy_blob_params"] = get_default_goomy_blob_params()
+    result["prometheus_params"] = get_default_prometheus_params()
+    result["grafana_params"] = get_default_grafana_params()
     result["assertoor_params"] = get_default_assertoor_params()
     result["prometheus_params"] = get_default_prometheus_params()
     result["xatu_sentry_params"] = get_default_xatu_sentry_params()
@@ -212,7 +217,17 @@ def input_parser(plan, input_args):
                 vc_extra_params=participant["vc_extra_params"],
                 vc_extra_env_vars=participant["vc_extra_env_vars"],
                 vc_extra_labels=participant["vc_extra_labels"],
+                use_remote_signer=participant["use_remote_signer"],
+                remote_signer_type=participant["remote_signer_type"],
+                remote_signer_image=participant["remote_signer_image"],
+                remote_signer_tolerations=participant["remote_signer_tolerations"],
+                remote_signer_extra_env_vars=participant[
+                    "remote_signer_extra_env_vars"
+                ],
+                remote_signer_extra_params=participant["remote_signer_extra_params"],
+                remote_signer_extra_labels=participant["remote_signer_extra_labels"],
                 builder_network_params=participant["builder_network_params"],
+                supernode=participant["supernode"],
                 el_min_cpu=participant["el_min_cpu"],
                 el_max_cpu=participant["el_max_cpu"],
                 el_min_mem=participant["el_min_mem"],
@@ -225,6 +240,10 @@ def input_parser(plan, input_args):
                 vc_max_cpu=participant["vc_max_cpu"],
                 vc_min_mem=participant["vc_min_mem"],
                 vc_max_mem=participant["vc_max_mem"],
+                remote_signer_min_cpu=participant["remote_signer_min_cpu"],
+                remote_signer_max_cpu=participant["remote_signer_max_cpu"],
+                remote_signer_min_mem=participant["remote_signer_min_mem"],
+                remote_signer_max_mem=participant["remote_signer_max_mem"],
                 validator_count=participant["validator_count"],
                 tolerations=participant["tolerations"],
                 node_selectors=participant["node_selectors"],
@@ -331,6 +350,17 @@ def input_parser(plan, input_args):
             storage_tsdb_retention_size=result["prometheus_params"][
                 "storage_tsdb_retention_size"
             ],
+            min_cpu=result["prometheus_params"]["min_cpu"],
+            max_cpu=result["prometheus_params"]["max_cpu"],
+            min_mem=result["prometheus_params"]["min_mem"],
+            max_mem=result["prometheus_params"]["max_mem"],
+        ),
+        grafana_params=struct(
+            additional_dashboards=result["grafana_params"]["additional_dashboards"],
+            min_cpu=result["grafana_params"]["min_cpu"],
+            max_cpu=result["grafana_params"]["max_cpu"],
+            min_mem=result["grafana_params"]["min_mem"],
+            max_mem=result["grafana_params"]["max_mem"],
         ),
         apache_port=result["apache_port"],
         assertoor_params=struct(
@@ -362,7 +392,6 @@ def input_parser(plan, input_args):
         ethereum_metrics_exporter_enabled=result["ethereum_metrics_exporter_enabled"],
         xatu_sentry_enabled=result["xatu_sentry_enabled"],
         parallel_keystore_generation=result["parallel_keystore_generation"],
-        grafana_additional_dashboards=result["grafana_additional_dashboards"],
         disable_peer_scoring=result["disable_peer_scoring"],
         persistent=result["persistent"],
         xatu_sentry_params=struct(
@@ -385,6 +414,10 @@ def input_parser(plan, input_args):
             el_public_port_start=result["port_publisher"]["el"]["public_port_start"],
             vc_enabled=result["port_publisher"]["vc"]["enabled"],
             vc_public_port_start=result["port_publisher"]["vc"]["public_port_start"],
+            remote_signer_enabled=result["port_publisher"]["remote_signer"]["enabled"],
+            remote_signer_public_port_start=result["port_publisher"]["remote_signer"][
+                "public_port_start"
+            ],
             additional_services_enabled=result["port_publisher"]["additional_services"][
                 "enabled"
             ],
@@ -461,6 +494,7 @@ def parse_network_params(plan, input_args):
         el_type = participant["el_type"]
         cl_type = participant["cl_type"]
         vc_type = participant["vc_type"]
+        remote_signer_type = participant["remote_signer_type"]
 
         if (
             cl_type in (constants.CL_TYPE.nimbus)
@@ -525,6 +559,9 @@ def parse_network_params(plan, input_args):
             else:
                 participant["use_separate_vc"] = True
 
+        if participant["use_remote_signer"] and not participant["use_separate_vc"]:
+            fail("`use_remote_signer` requires `use_separate_vc`")
+
         if vc_type == "":
             # Defaults to matching the chosen CL client
             vc_type = cl_type
@@ -554,6 +591,12 @@ def parse_network_params(plan, input_args):
                     )
                 )
             participant["vc_image"] = default_image
+
+        remote_signer_image = participant["remote_signer_image"]
+        if remote_signer_image == "":
+            participant["remote_signer_image"] = DEFAULT_REMOTE_SIGNER_IMAGES.get(
+                remote_signer_type, ""
+            )
 
         if result["parallel_keystore_generation"] and participant["vc_count"] != 1:
             fail(
@@ -622,6 +665,9 @@ def parse_network_params(plan, input_args):
 
         vc_extra_params = participant.get("vc_extra_params", [])
         participant["vc_extra_params"] = vc_extra_params
+
+        remote_signer_extra_params = participant.get("remote_signer_extra_params", [])
+        participant["remote_signer_extra_params"] = remote_signer_extra_params
 
         total_participant_count += participant["count"]
 
@@ -772,6 +818,7 @@ def default_input_args(input_args):
         "apache_port": None,
         "global_tolerations": [],
         "global_node_selectors": {},
+        "use_remote_signer": False,
         "keymanager_enabled": False,
         "checkpoint_sync_enabled": False,
         "checkpoint_sync_url": "",
@@ -876,6 +923,7 @@ def default_participant():
         "cl_max_cpu": 0,
         "cl_min_mem": 0,
         "cl_max_mem": 0,
+        "supernode": False,
         "use_separate_vc": None,
         "vc_type": "",
         "vc_image": "",
@@ -889,6 +937,17 @@ def default_participant():
         "vc_max_cpu": 0,
         "vc_min_mem": 0,
         "vc_max_mem": 0,
+        "use_remote_signer": None,
+        "remote_signer_type": "web3signer",
+        "remote_signer_image": "",
+        "remote_signer_extra_env_vars": {},
+        "remote_signer_extra_labels": {},
+        "remote_signer_extra_params": [],
+        "remote_signer_tolerations": [],
+        "remote_signer_min_cpu": 0,
+        "remote_signer_max_cpu": 0,
+        "remote_signer_min_mem": 0,
+        "remote_signer_max_mem": 0,
         "validator_count": None,
         "node_selectors": {},
         "tolerations": [],
@@ -936,6 +995,10 @@ def get_default_mev_params(mev_type, preset):
         "labels": None,
         "storage_tsdb_retention_time": "1d",
         "storage_tsdb_retention_size": "512MB",
+        "min_cpu": 10,
+        "max_cpu": 1000,
+        "min_mem": 128,
+        "max_mem": 2048,
     }
 
     if mev_type == constants.MEV_RS_MEV_TYPE:
@@ -997,6 +1060,20 @@ def get_default_prometheus_params():
     return {
         "storage_tsdb_retention_time": "1d",
         "storage_tsdb_retention_size": "512MB",
+        "min_cpu": 10,
+        "max_cpu": 1000,
+        "min_mem": 128,
+        "max_mem": 2048,
+    }
+
+
+def get_default_grafana_params():
+    return {
+        "additional_dashboards": [],
+        "min_cpu": 10,
+        "max_cpu": 1000,
+        "min_mem": 128,
+        "max_mem": 2048,
     }
 
 
@@ -1030,7 +1107,8 @@ def get_port_publisher_params(parameter_type, input_args=None):
         "el": {"enabled": False, "public_port_start": 32000},
         "cl": {"enabled": False, "public_port_start": 33000},
         "vc": {"enabled": False, "public_port_start": 34000},
-        "additional_services": {"enabled": False, "public_port_start": 35000},
+        "remote_signer": {"enabled": False, "public_port_start": 35000},
+        "additional_services": {"enabled": False, "public_port_start": 36000},
     }
     if parameter_type == "default":
         return port_publisher_parameters
@@ -1119,7 +1197,7 @@ def enrich_mev_extra_params(parsed_arguments_dict, mev_prefix, mev_port, mev_typ
     )
     if mev_type == constants.FLASHBOTS_MEV_TYPE:
         mev_participant = default_participant()
-        mev_participant["el_type"] = "geth-builder"
+        mev_participant["el_type"] = "geth"
         mev_participant.update(
             {
                 "el_image": parsed_arguments_dict["mev_params"]["mev_builder_image"],

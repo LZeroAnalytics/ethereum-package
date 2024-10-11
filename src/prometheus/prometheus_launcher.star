@@ -3,7 +3,8 @@ prometheus = import_module("github.com/kurtosis-tech/prometheus-package/main.sta
 
 EXECUTION_CLIENT_TYPE = "execution"
 BEACON_CLIENT_TYPE = "beacon"
-vc_type = "validator"
+VC_TYPE = "validator"
+REMOTE_SIGNER_TYPE = "remote-signer"
 
 METRICS_INFO_NAME_KEY = "name"
 METRICS_INFO_URL_KEY = "url"
@@ -12,29 +13,24 @@ METRICS_INFO_ADDITIONAL_CONFIG_KEY = "config"
 
 PROMETHEUS_DEFAULT_SCRAPE_INTERVAL = "15s"
 
-# The min/max CPU/memory that prometheus can use
-MIN_CPU = 10
-MAX_CPU = 1000
-MIN_MEMORY = 128
-MAX_MEMORY = 2048
-
 
 def launch_prometheus(
     plan,
     el_contexts,
     cl_contexts,
     vc_contexts,
+    remote_signer_contexts,
     additional_metrics_jobs,
     ethereum_metrics_exporter_contexts,
     xatu_sentry_contexts,
     global_node_selectors,
-    storage_tsdb_retention_time,
-    storage_tsdb_retention_size,
+    prometheus_params,
 ):
     metrics_jobs = get_metrics_jobs(
         el_contexts,
         cl_contexts,
         vc_contexts,
+        remote_signer_contexts,
         additional_metrics_jobs,
         ethereum_metrics_exporter_contexts,
         xatu_sentry_contexts,
@@ -43,13 +39,13 @@ def launch_prometheus(
         plan,
         metrics_jobs,
         "prometheus",
-        MIN_CPU,
-        MAX_CPU,
-        MIN_MEMORY,
-        MAX_MEMORY,
+        min_cpu=prometheus_params.min_cpu,
+        max_cpu=prometheus_params.max_cpu,
+        min_memory=prometheus_params.min_mem,
+        max_memory=prometheus_params.max_mem,
         node_selectors=global_node_selectors,
-        storage_tsdb_retention_time=storage_tsdb_retention_time,
-        storage_tsdb_retention_size=storage_tsdb_retention_size,
+        storage_tsdb_retention_time=prometheus_params.storage_tsdb_retention_time,
+        storage_tsdb_retention_size=prometheus_params.storage_tsdb_retention_size,
     )
 
     return prometheus_url
@@ -59,6 +55,7 @@ def get_metrics_jobs(
     el_contexts,
     cl_contexts,
     vc_contexts,
+    remote_signer_contexts,
     additional_metrics_jobs,
     ethereum_metrics_exporter_contexts,
     xatu_sentry_contexts,
@@ -107,6 +104,7 @@ def get_metrics_jobs(
                 "service": context.beacon_service_name,
                 "client_type": BEACON_CLIENT_TYPE,
                 "client_name": context.client_name,
+                "supernode": str(context.supernode),
             }
             additional_config = beacon_metrics_info[METRICS_INFO_ADDITIONAL_CONFIG_KEY]
             if additional_config != None:
@@ -136,7 +134,30 @@ def get_metrics_jobs(
         scrape_interval = PROMETHEUS_DEFAULT_SCRAPE_INTERVAL
         labels = {
             "service": context.service_name,
-            "client_type": vc_type,
+            "client_type": VC_TYPE,
+            "client_name": context.client_name,
+        }
+
+        metrics_jobs.append(
+            new_metrics_job(
+                job_name=metrics_info[METRICS_INFO_NAME_KEY],
+                endpoint=metrics_info[METRICS_INFO_URL_KEY],
+                metrics_path=metrics_info[METRICS_INFO_PATH_KEY],
+                labels=labels,
+                scrape_interval=scrape_interval,
+            )
+        )
+
+    # Adding validator clients metrics jobs
+    for context in remote_signer_contexts:
+        if context == None:
+            continue
+        metrics_info = context.metrics_info
+
+        scrape_interval = PROMETHEUS_DEFAULT_SCRAPE_INTERVAL
+        labels = {
+            "service": context.service_name,
+            "client_type": REMOTE_SIGNER_TYPE,
             "client_name": context.client_name,
         }
 

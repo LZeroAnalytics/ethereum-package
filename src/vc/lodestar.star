@@ -13,23 +13,17 @@ VERBOSITY_LEVELS = {
 
 
 def get_config(
+    participant,
     el_cl_genesis_data,
     keymanager_file,
     image,
-    participant_log_level,
     global_log_level,
     beacon_http_url,
     cl_context,
     el_context,
+    remote_signer_context,
     full_name,
     node_keystore_files,
-    vc_min_cpu,
-    vc_max_cpu,
-    vc_min_mem,
-    vc_max_mem,
-    extra_params,
-    extra_env_vars,
-    extra_labels,
     tolerations,
     node_selectors,
     keymanager_enabled,
@@ -38,7 +32,7 @@ def get_config(
     vc_index,
 ):
     log_level = input_parser.get_client_log_level_or_default(
-        participant_log_level, global_log_level, VERBOSITY_LEVELS
+        participant.vc_log_level, global_log_level, VERBOSITY_LEVELS
     )
 
     validator_keys_dirpath = shared_utils.path_join(
@@ -58,8 +52,6 @@ def get_config(
         + constants.GENESIS_CONFIG_MOUNT_PATH_ON_CONTAINER
         + "/config.yaml",
         "--beaconNodes=" + beacon_http_url,
-        "--keystoresDir=" + validator_keys_dirpath,
-        "--secretsDir=" + validator_secrets_dirpath,
         "--suggestedFeeRecipient=" + constants.VALIDATING_REWARDS_ACCOUNT,
         # vvvvvvvvvvvvvvvvvvv PROMETHEUS CONFIG vvvvvvvvvvvvvvvvvvvvv
         "--metrics",
@@ -71,6 +63,21 @@ def get_config(
         "--disableKeystoresThreadPool",
     ]
 
+    if remote_signer_context == None:
+        cmd.extend(
+            [
+                "--keystoresDir=" + validator_keys_dirpath,
+                "--secretsDir=" + validator_secrets_dirpath,
+            ]
+        )
+    else:
+        cmd.extend(
+            [
+                "--externalSigner.url={0}".format(remote_signer_context.http_url),
+                "--externalSigner.fetch",
+            ]
+        )
+
     keymanager_api_cmd = [
         "--keymanager",
         "--keymanager.authEnabled=true",
@@ -80,9 +87,9 @@ def get_config(
         "--keymanager.tokenFile=" + constants.KEYMANAGER_MOUNT_PATH_ON_CONTAINER,
     ]
 
-    if len(extra_params) > 0:
+    if len(participant.vc_extra_params) > 0:
         # this is a repeated<proto type>, we convert it into Starlark
-        cmd.extend([param for param in extra_params])
+        cmd.extend([param for param in participant.vc_extra_params])
 
     files = {
         constants.GENESIS_DATA_MOUNTPOINT_ON_CLIENTS: el_cl_genesis_data.files_artifact_uuid,
@@ -114,27 +121,35 @@ def get_config(
             shared_utils.get_port_specs(public_keymanager_port_assignment)
         )
 
+    env_vars = participant.vc_extra_env_vars
     if preset == "minimal":
-        extra_env_vars["LODESTAR_PRESET"] = "minimal"
+        env_vars["LODESTAR_PRESET"] = "minimal"
 
-    return ServiceConfig(
-        image=image,
-        ports=ports,
-        public_ports=public_ports,
-        cmd=cmd,
-        env_vars=extra_env_vars,
-        files=files,
-        min_cpu=vc_min_cpu,
-        max_cpu=vc_max_cpu,
-        min_memory=vc_min_mem,
-        max_memory=vc_max_mem,
-        labels=shared_utils.label_maker(
-            constants.VC_TYPE.lodestar,
-            constants.CLIENT_TYPES.validator,
-            image,
-            cl_context.client_name,
-            extra_labels,
+    config_args = {
+        "image": image,
+        "ports": ports,
+        "public_ports": public_ports,
+        "cmd": cmd,
+        "files": files,
+        "env_vars": env_vars,
+        "labels": shared_utils.label_maker(
+            client=constants.CL_TYPE.lodestar,
+            client_type=constants.CLIENT_TYPES.validator,
+            image=image,
+            connected_client=cl_context.client_name,
+            extra_labels=participant.vc_extra_labels,
+            supernode=participant.supernode,
         ),
-        tolerations=tolerations,
-        node_selectors=node_selectors,
-    )
+        "tolerations": tolerations,
+        "node_selectors": node_selectors,
+    }
+
+    if participant.vc_min_cpu > 0:
+        config_args["min_cpu"] = participant.vc_min_cpu
+    if participant.vc_max_cpu > 0:
+        config_args["max_cpu"] = participant.vc_max_cpu
+    if participant.vc_min_mem > 0:
+        config_args["min_memory"] = participant.vc_min_mem
+    if participant.vc_max_mem > 0:
+        config_args["max_memory"] = participant.vc_max_mem
+    return ServiceConfig(**config_args)

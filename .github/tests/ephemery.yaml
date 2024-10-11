@@ -3,7 +3,6 @@ participants:
     cl_type: teku
   - el_type: nethermind
     cl_type: prysm
-    cl_image: gcr.io/prysmaticlabs/prysm/beacon-chain:stable
   - el_type: erigon
     cl_type: nimbus
   - el_type: besu
@@ -16,3 +15,4 @@ participants:
     cl_type: grandine
 network_params:
   network: ephemery
+checkpoint_sync_enabled: true
