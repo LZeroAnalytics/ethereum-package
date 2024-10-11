@@ -9,12 +9,7 @@ nimbus = import_module("./nimbus.star")
 prysm = import_module("./prysm.star")
 teku = import_module("./teku.star")
 vc_shared = import_module("./shared.star")
-
-# The defaults for min/max CPU/memory that the validator client can use
-MIN_CPU = 50
-MAX_CPU = 300
-MIN_MEMORY = 128
-MAX_MEMORY = 512
+shared_utils = import_module("../shared_utils/shared_utils.star")
 
 
 def launch(
@@ -24,36 +19,30 @@ def launch(
     service_name,
     vc_type,
     image,
-    participant_log_level,
     global_log_level,
     cl_context,
     el_context,
+    remote_signer_context,
     full_name,
     snooper_enabled,
     snooper_beacon_context,
     node_keystore_files,
-    vc_min_cpu,
-    vc_max_cpu,
-    vc_min_mem,
-    vc_max_mem,
-    extra_params,
-    extra_env_vars,
-    extra_labels,
+    participant,
     prysm_password_relative_filepath,
     prysm_password_artifact_uuid,
-    vc_tolerations,
-    participant_tolerations,
     global_tolerations,
     node_selectors,
-    keymanager_enabled,
+    preset,
     network,  # TODO: remove when deneb rebase is done
     electra_fork_epoch,  # TODO: remove when deneb rebase is done
+    port_publisher,
+    vc_index,
 ):
     if node_keystore_files == None:
         return None
 
     tolerations = input_parser.get_client_tolerations(
-        vc_tolerations, participant_tolerations, global_tolerations
+        participant.vc_tolerations, participant.tolerations, global_tolerations
     )
 
     if snooper_enabled:
@@ -65,122 +54,104 @@ def launch(
         beacon_http_url = "{0}".format(
             cl_context.beacon_http_url,
         )
-    vc_min_cpu = int(vc_min_cpu) if int(vc_min_cpu) > 0 else MIN_CPU
-    vc_max_cpu = int(vc_max_cpu) if int(vc_max_cpu) > 0 else MAX_CPU
-    vc_min_mem = int(vc_min_mem) if int(vc_min_mem) > 0 else MIN_MEMORY
-    vc_max_mem = int(vc_max_mem) if int(vc_max_mem) > 0 else MAX_MEMORY
 
+    keymanager_enabled = participant.keymanager_enabled
     if vc_type == constants.VC_TYPE.lighthouse:
+        if remote_signer_context != None:
+            fail("`use_remote_signer` flag not supported for lighthouse VC")
         config = lighthouse.get_config(
+            participant=participant,
             el_cl_genesis_data=launcher.el_cl_genesis_data,
             image=image,
-            participant_log_level=participant_log_level,
             global_log_level=global_log_level,
             beacon_http_url=beacon_http_url,
             cl_context=cl_context,
             el_context=el_context,
             full_name=full_name,
             node_keystore_files=node_keystore_files,
-            vc_min_cpu=vc_min_cpu,
-            vc_max_cpu=vc_max_cpu,
-            vc_min_mem=vc_min_mem,
-            vc_max_mem=vc_max_mem,
-            extra_params=extra_params,
-            extra_env_vars=extra_env_vars,
-            extra_labels=extra_labels,
             tolerations=tolerations,
             node_selectors=node_selectors,
             keymanager_enabled=keymanager_enabled,
             network=network,  # TODO: remove when deneb rebase is done
             electra_fork_epoch=electra_fork_epoch,  # TODO: remove when deneb rebase is done
+            port_publisher=port_publisher,
+            vc_index=vc_index,
         )
     elif vc_type == constants.VC_TYPE.lodestar:
         config = lodestar.get_config(
+            participant=participant,
             el_cl_genesis_data=launcher.el_cl_genesis_data,
             keymanager_file=keymanager_file,
             image=image,
-            participant_log_level=participant_log_level,
             global_log_level=global_log_level,
             beacon_http_url=beacon_http_url,
             cl_context=cl_context,
             el_context=el_context,
+            remote_signer_context=remote_signer_context,
             full_name=full_name,
             node_keystore_files=node_keystore_files,
-            vc_min_cpu=vc_min_cpu,
-            vc_max_cpu=vc_max_cpu,
-            vc_min_mem=vc_min_mem,
-            vc_max_mem=vc_max_mem,
-            extra_params=extra_params,
-            extra_env_vars=extra_env_vars,
-            extra_labels=extra_labels,
             tolerations=tolerations,
             node_selectors=node_selectors,
             keymanager_enabled=keymanager_enabled,
+            preset=preset,
+            port_publisher=port_publisher,
+            vc_index=vc_index,
         )
     elif vc_type == constants.VC_TYPE.teku:
         config = teku.get_config(
+            participant=participant,
             el_cl_genesis_data=launcher.el_cl_genesis_data,
             keymanager_file=keymanager_file,
             image=image,
             beacon_http_url=beacon_http_url,
             cl_context=cl_context,
             el_context=el_context,
+            remote_signer_context=remote_signer_context,
             full_name=full_name,
             node_keystore_files=node_keystore_files,
-            vc_min_cpu=vc_min_cpu,
-            vc_max_cpu=vc_max_cpu,
-            vc_min_mem=vc_min_mem,
-            vc_max_mem=vc_max_mem,
-            extra_params=extra_params,
-            extra_env_vars=extra_env_vars,
-            extra_labels=extra_labels,
             tolerations=tolerations,
             node_selectors=node_selectors,
             keymanager_enabled=keymanager_enabled,
+            port_publisher=port_publisher,
+            vc_index=vc_index,
         )
     elif vc_type == constants.VC_TYPE.nimbus:
         config = nimbus.get_config(
+            participant=participant,
             el_cl_genesis_data=launcher.el_cl_genesis_data,
             keymanager_file=keymanager_file,
             image=image,
             beacon_http_url=beacon_http_url,
             cl_context=cl_context,
             el_context=el_context,
+            remote_signer_context=remote_signer_context,
             full_name=full_name,
             node_keystore_files=node_keystore_files,
-            vc_min_cpu=vc_min_cpu,
-            vc_max_cpu=vc_max_cpu,
-            vc_min_mem=vc_min_mem,
-            vc_max_mem=vc_max_mem,
-            extra_params=extra_params,
-            extra_env_vars=extra_env_vars,
-            extra_labels=extra_labels,
             tolerations=tolerations,
             node_selectors=node_selectors,
             keymanager_enabled=keymanager_enabled,
+            port_publisher=port_publisher,
+            vc_index=vc_index,
         )
     elif vc_type == constants.VC_TYPE.prysm:
         config = prysm.get_config(
+            participant=participant,
             el_cl_genesis_data=launcher.el_cl_genesis_data,
             keymanager_file=keymanager_file,
             image=image,
             beacon_http_url=beacon_http_url,
             cl_context=cl_context,
             el_context=el_context,
+            remote_signer_context=remote_signer_context,
             full_name=full_name,
             node_keystore_files=node_keystore_files,
-            vc_min_cpu=vc_min_cpu,
-            vc_max_cpu=vc_max_cpu,
-            vc_min_mem=vc_min_mem,
-            vc_max_mem=vc_max_mem,
-            extra_params=extra_params,
-            extra_env_vars=extra_env_vars,
-            extra_labels=extra_labels,
             prysm_password_relative_filepath=prysm_password_relative_filepath,
             prysm_password_artifact_uuid=prysm_password_artifact_uuid,
             tolerations=tolerations,
             node_selectors=node_selectors,
             keymanager_enabled=keymanager_enabled,
+            port_publisher=port_publisher,
+            vc_index=vc_index,
         )
     elif vc_type == constants.VC_TYPE.grandine:
         fail("Grandine VC is not yet supported")
@@ -189,20 +160,12 @@ def launch(
 
     validator_service = plan.add_service(service_name, config)
 
-    validator_metrics_port = validator_service.ports[
-        vc_shared.VALIDATOR_CLIENT_METRICS_PORT_ID
-    ]
+    validator_metrics_port = validator_service.ports[constants.METRICS_PORT_ID]
     validator_metrics_url = "{0}:{1}".format(
         validator_service.ip_address, validator_metrics_port.number
     )
     validator_node_metrics_info = node_metrics.new_node_metrics_info(
         service_name, vc_shared.METRICS_PATH, validator_metrics_url
-    )
-
-    validator_http_port = (
-        validator_service.ports[vc_shared.VALIDATOR_HTTP_PORT_ID]
-        if keymanager_enabled
-        else None
     )
 
     return vc_context.new_vc_context(

@@ -9,4 +9,5 @@ participants:
     cl_type: lighthouse
   - el_type: erigon
     cl_type: lodestar
-additional_services: []
+  - el_type: erigon
+    cl_type: grandine

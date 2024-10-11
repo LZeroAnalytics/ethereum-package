@@ -26,24 +26,26 @@ def launch(
     global_node_selectors,
     global_tolerations,
     persistent,
-    network_id,
     num_participants,
     validator_data,
     prysm_password_relative_filepath,
     prysm_password_artifact_uuid,
+    checkpoint_sync_enabled,
+    checkpoint_sync_url,
+    port_publisher,
 ):
     plan.print("Launching CL network")
 
     cl_launchers = {
         constants.CL_TYPE.lighthouse: {
             "launcher": lighthouse.new_lighthouse_launcher(
-                el_cl_data, jwt_file, network_params.network
+                el_cl_data, jwt_file, network_params
             ),
             "launch_method": lighthouse.launch,
         },
         constants.CL_TYPE.lodestar: {
             "launcher": lodestar.new_lodestar_launcher(
-                el_cl_data, jwt_file, network_params.network
+                el_cl_data, jwt_file, network_params
             ),
             "launch_method": lodestar.launch,
         },
@@ -51,7 +53,7 @@ def launch(
             "launcher": nimbus.new_nimbus_launcher(
                 el_cl_data,
                 jwt_file,
-                network_params.network,
+                network_params,
                 keymanager_file,
             ),
             "launch_method": nimbus.launch,
@@ -60,9 +62,7 @@ def launch(
             "launcher": prysm.new_prysm_launcher(
                 el_cl_data,
                 jwt_file,
-                network_params.network,
-                prysm_password_relative_filepath,
-                prysm_password_artifact_uuid,
+                network_params,
             ),
             "launch_method": prysm.launch,
         },
@@ -70,7 +70,7 @@ def launch(
             "launcher": teku.new_teku_launcher(
                 el_cl_data,
                 jwt_file,
-                network_params.network,
+                network_params,
                 keymanager_file,
             ),
             "launch_method": teku.launch,
@@ -79,7 +79,7 @@ def launch(
             "launcher": grandine.new_grandine_launcher(
                 el_cl_data,
                 jwt_file,
-                network_params.network,
+                network_params,
             ),
             "launch_method": grandine.launch,
         },
@@ -93,7 +93,7 @@ def launch(
         or constants.NETWORK_NAME.shadowfork in network_params.network
         else None
     )
-
+    network_name = shared_utils.get_network_name(network_params.network)
     for index, participant in enumerate(participants):
         cl_type = participant.cl_type
         el_type = participant.el_type
@@ -102,10 +102,14 @@ def launch(
             global_node_selectors,
         )
 
+        tolerations = input_parser.get_client_tolerations(
+            participant.cl_tolerations, participant.tolerations, global_tolerations
+        )
+
         if cl_type not in cl_launchers:
             fail(
                 "Unsupported launcher '{0}', need one of '{1}'".format(
-                    cl_type, ",".join([cl.name for cl in cl_launchers.keys()])
+                    cl_type, ",".join(cl_launchers.keys())
                 )
             )
 
@@ -118,7 +122,7 @@ def launch(
 
         cl_service_name = "cl-{0}-{1}-{2}".format(index_str, cl_type, el_type)
         new_cl_node_validator_keystores = None
-        if participant.validator_count != 0:
+        if participant.validator_count != 0 and participant.vc_count != 0:
             new_cl_node_validator_keystores = preregistered_validator_keys_for_nodes[
                 index
             ]
@@ -142,6 +146,21 @@ def launch(
                     snooper_engine_context
                 )
             )
+
+        if checkpoint_sync_enabled:
+            if checkpoint_sync_url == "":
+                if (
+                    network_params.network in constants.PUBLIC_NETWORKS
+                    or network_params.network == constants.NETWORK_NAME.ephemery
+                ):
+                    checkpoint_sync_url = constants.CHECKPOINT_SYNC_URL[
+                        network_params.network
+                    ]
+                else:
+                    fail(
+                        "Checkpoint sync URL is required if you enabled checkpoint_sync for custom networks. Please provide a valid URL."
+                    )
+
         all_snooper_engine_contexts.append(snooper_engine_context)
         full_name = "{0}-{1}-{2}".format(index_str, el_type, cl_type)
         if index == 0:
@@ -149,32 +168,20 @@ def launch(
                 plan,
                 cl_launcher,
                 cl_service_name,
-                participant.cl_image,
-                participant.cl_log_level,
+                participant,
                 global_log_level,
                 cl_context_BOOTNODE,
                 el_context,
                 full_name,
                 new_cl_node_validator_keystores,
-                participant.cl_min_cpu,
-                participant.cl_max_cpu,
-                participant.cl_min_mem,
-                participant.cl_max_mem,
-                participant.snooper_enabled,
                 snooper_engine_context,
-                participant.blobber_enabled,
-                participant.blobber_extra_params,
-                participant.cl_extra_params,
-                participant.cl_extra_env_vars,
-                participant.cl_extra_labels,
                 persistent,
-                participant.cl_volume_size,
-                participant.cl_tolerations,
-                participant.tolerations,
-                global_tolerations,
+                tolerations,
                 node_selectors,
-                participant.use_separate_vc,
-                participant.keymanager_enabled,
+                checkpoint_sync_enabled,
+                checkpoint_sync_url,
+                port_publisher,
+                index,
             )
         else:
             boot_cl_client_ctx = all_cl_contexts
@@ -182,32 +189,20 @@ def launch(
                 plan,
                 cl_launcher,
                 cl_service_name,
-                participant.cl_image,
-                participant.cl_log_level,
+                participant,
                 global_log_level,
                 boot_cl_client_ctx,
                 el_context,
                 full_name,
                 new_cl_node_validator_keystores,
-                participant.cl_min_cpu,
-                participant.cl_max_cpu,
-                participant.cl_min_mem,
-                participant.cl_max_mem,
-                participant.snooper_enabled,
                 snooper_engine_context,
-                participant.blobber_enabled,
-                participant.blobber_extra_params,
-                participant.cl_extra_params,
-                participant.cl_extra_env_vars,
-                participant.cl_extra_labels,
                 persistent,
-                participant.cl_volume_size,
-                participant.cl_tolerations,
-                participant.tolerations,
-                global_tolerations,
+                tolerations,
                 node_selectors,
-                participant.use_separate_vc,
-                participant.keymanager_enabled,
+                checkpoint_sync_enabled,
+                checkpoint_sync_url,
+                port_publisher,
+                index,
             )
 
         # Add participant cl additional prometheus labels

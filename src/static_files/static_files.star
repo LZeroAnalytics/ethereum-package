@@ -16,6 +16,11 @@ VALIDATOR_RANGES_CONFIG_TEMPLATE_FILEPATH = (
     STATIC_FILES_DIRPATH + "/validator-ranges/config.yaml.tmpl"
 )
 
+APACHE_CONFIG_FILEPATH = STATIC_FILES_DIRPATH + "/apache-config/index.html"
+APACHE_ENR_FILEPATH = STATIC_FILES_DIRPATH + "/apache-config/enr.txt.tmpl"
+APACHE_ENR_LIST_FILEPATH = STATIC_FILES_DIRPATH + "/apache-config/enr_list.txt.tmpl"
+APACHE_ENODE_FILEPATH = STATIC_FILES_DIRPATH + "/apache-config/enode.txt.tmpl"
+
 DORA_CONFIG_TEMPLATE_FILEPATH = STATIC_FILES_DIRPATH + "/dora-config/config.yaml.tmpl"
 DUGTRIO_CONFIG_TEMPLATE_FILEPATH = (
     STATIC_FILES_DIRPATH + "/dugtrio-config/config.yaml.tmpl"
@@ -23,7 +28,10 @@ DUGTRIO_CONFIG_TEMPLATE_FILEPATH = (
 BLUTGANG_CONFIG_TEMPLATE_FILEPATH = (
     STATIC_FILES_DIRPATH + "/blutgang-config/config.toml.tmpl"
 )
-
+FORKY_CONFIG_TEMPLATE_FILEPATH = STATIC_FILES_DIRPATH + "/forky-config/config.yaml.tmpl"
+TRACOOR_CONFIG_TEMPLATE_FILEPATH = (
+    STATIC_FILES_DIRPATH + "/tracoor-config/config.yaml.tmpl"
+)
 FULL_BEACONCHAIN_CONFIG_TEMPLATE_FILEPATH = (
     STATIC_FILES_DIRPATH + "/full-beaconchain-config/config.yaml.tmpl"
 )
@@ -75,8 +83,16 @@ CL_GENESIS_GENERATION_MNEMONICS_TEMPLATE_FILEPATH = (
 
 JWT_PATH_FILEPATH = STATIC_FILES_DIRPATH + "/jwt/jwtsecret"
 KEYMANAGER_PATH_FILEPATH = STATIC_FILES_DIRPATH + "/keymanager/keymanager.txt"
-KEYMANAGER_P12_PATH_FILEPATH = (
-    STATIC_FILES_DIRPATH + "/keymanager/validator_keystore.p12"
-)
+
 
 SHADOWFORK_FILEPATH = "/network-configs/latest_block.json"
+
+MEV_RS_MEV_BOOST_CONFIG_FILEPATH = (
+    STATIC_FILES_DIRPATH + "/mev/mev-rs/mev_boost/config.toml.tmpl"
+)
+MEV_RS_MEV_RELAY_CONFIG_FILEPATH = (
+    STATIC_FILES_DIRPATH + "/mev/mev-rs/mev_relay/config.toml.tmpl"
+)
+MEV_RS_MEV_BUILDER_CONFIG_FILEPATH = (
+    STATIC_FILES_DIRPATH + "/mev/mev-rs/mev_builder/config.toml.tmpl"
+)

@@ -1,7 +1,7 @@
 participants:
   - el_type: geth
     cl_type: teku
-  - el_type: nethermind
+  - el_type: geth
     cl_type: prysm
   - el_type: erigon
     cl_type: nimbus
@@ -9,8 +9,15 @@ participants:
     cl_type: lighthouse
   - el_type: reth
     cl_type: lodestar
-  - el_type: ethereumjs
-    cl_type: teku
+  - el_type: geth
+    cl_type: grandine
 network_params:
-  deneb_fork_epoch: 1
-additional_services: []
+  preset: minimal
+  seconds_per_slot: 6
+additional_services:
+  - dora
+  - tx_spammer
+  - apache
+
+mev_type: mev-rs
+

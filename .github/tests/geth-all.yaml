@@ -9,4 +9,8 @@ participants:
     cl_type: lighthouse
   - el_type: geth
     cl_type: lodestar
-additional_services: []
+  - el_type: geth
+    cl_type: grandine
+additional_services:
+  - goomy_blob
+  - dora

@@ -9,4 +9,5 @@ participants:
     cl_type: lighthouse
   - el_type: ethereumjs
     cl_type: lodestar
-additional_services: []
+  - el_type: ethereumjs
+    cl_type: grandine
