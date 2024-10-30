@@ -4,7 +4,7 @@ def launch_faucet(plan, chain_id, private_key, node_ip, rpc_port):
     plan.add_service(
         name="faucet",
         config = ServiceConfig(
-            image = "tiljordan/ethereum-faucet:v1.0.4",
+            image = "tiljordan/ethereum-faucet:v1.0.5",
             ports = {
                 "api": PortSpec(number=8090, transport_protocol="TCP", wait=None)
             },
