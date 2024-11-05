@@ -105,6 +105,7 @@ def input_parser(plan, input_args):
     result["goomy_blob_params"] = get_default_goomy_blob_params()
     result["prometheus_params"] = get_default_prometheus_params()
     result["grafana_params"] = get_default_grafana_params()
+    result["blockscout_params"] = get_default_blockscout_params()
     result["assertoor_params"] = get_default_assertoor_params()
     result["prometheus_params"] = get_default_prometheus_params()
     result["xatu_sentry_params"] = get_default_xatu_sentry_params()
@@ -362,6 +363,10 @@ def input_parser(plan, input_args):
             max_cpu=result["grafana_params"]["max_cpu"],
             min_mem=result["grafana_params"]["min_mem"],
             max_mem=result["grafana_params"]["max_mem"],
+        ),
+        blockscout_params=struct(
+            backend_url=result["blockscout_params"]["backend_url"],
+            frontend_url=result["blockscout_params"]["frontend_url"]
         ),
         apache_port=result["apache_port"],
         assertoor_params=struct(
@@ -1084,6 +1089,12 @@ def get_default_grafana_params():
         "max_cpu": 1000,
         "min_mem": 128,
         "max_mem": 2048,
+    }
+
+def get_default_blockscout_params():
+    return {
+        "backend_url": "",
+        "frontend_url": ""
     }
 
 

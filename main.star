@@ -500,6 +500,7 @@ def run(plan, args={}):
                 global_node_selectors,
                 args_with_right_defaults.port_publisher,
                 index,
+                args_with_right_defaults.blockscout_params
             )
             plan.print("Successfully launched blockscout")
         elif additional_service == "dora":

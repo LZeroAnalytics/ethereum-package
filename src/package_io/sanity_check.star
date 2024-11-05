@@ -193,6 +193,10 @@ SUBCATEGORY_PARAMS = {
         "min_mem",
         "max_mem",
     ],
+    "blockscout_params": [
+        "backend_url",
+        "frontend_url"
+    ],
     "assertoor_params": [
         "image",
         "run_stability_check",
