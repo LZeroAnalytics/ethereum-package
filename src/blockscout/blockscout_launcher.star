@@ -75,6 +75,10 @@ def launch_blockscout(
     additional_service_index,
     blockscout_params
 ):
+
+    plan.print("blockscout params")
+    plan.print(blockscout_params)
+    plan.print(blockscout_params.backend_url)
     postgres_output = postgres.run(
         plan,
         service_name="blockscout-postgres",
