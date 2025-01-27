@@ -1,0 +1,8 @@
+participants:
+  - el_type: reth
+    el_image: tiljordan/reth:v1.0.5
+    cl_type: lighthouse
+global_log_level: debug
+network_params:
+  network: kurtosis
+  network_id: "1"

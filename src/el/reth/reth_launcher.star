@@ -135,7 +135,7 @@ def get_config(
     used_ports = shared_utils.get_port_specs(used_port_assignments)
 
     cmd = [
-        "/usr/local/bin/mev build" if launcher.builder else "reth",
+        "/usr/local/bin/mev build" if launcher.builder else "/usr/local/bin/lzero-custom-reth",
         "node",
         "-{0}".format(log_level),
         "--datadir=" + EXECUTION_DATA_DIRPATH_ON_CLIENT_CONTAINER,
