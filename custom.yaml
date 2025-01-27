@@ -5,4 +5,4 @@ participants:
 global_log_level: debug
 network_params:
   network: kurtosis
-  network_id: "1"
+  network_id: "2"

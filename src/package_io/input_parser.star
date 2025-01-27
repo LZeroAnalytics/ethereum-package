@@ -111,7 +111,6 @@ def input_parser(plan, input_args):
     result["custom_flood_params"] = get_default_custom_flood_params()
     result["disable_peer_scoring"] = False
     result["grafana_params"] = get_default_grafana_params()
-    result["blockscout_params"] = get_default_blockscout_params()
     result["assertoor_params"] = get_default_assertoor_params()
     result["prometheus_params"] = get_default_prometheus_params()
     result["xatu_sentry_params"] = get_default_xatu_sentry_params()
@@ -387,11 +386,6 @@ def input_parser(plan, input_args):
         )
         if result["mev_params"]
         else None,
-        blockscout_params=struct(
-            image=result["blockscout_params"]["image"],
-            verif_image=result["blockscout_params"]["verif_image"],
-            frontend_image=result["blockscout_params"]["frontend_image"],
-        ),
         dora_params=struct(
             image=result["dora_params"]["image"],
             env=result["dora_params"]["env"],
@@ -1041,15 +1035,6 @@ def default_participant():
         "builder_network_params": None,
         "keymanager_enabled": None,
     }
-
-
-def get_default_blockscout_params():
-    return {
-        "image": "blockscout/blockscout:latest",
-        "verif_image": "ghcr.io/blockscout/smart-contract-verifier:latest",
-        "frontend_image": "ghcr.io/blockscout/frontend:latest",
-    }
-
 
 def get_default_dora_params():
     return {
