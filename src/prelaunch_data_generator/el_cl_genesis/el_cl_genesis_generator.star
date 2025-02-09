@@ -30,6 +30,9 @@ def generate_el_cl_genesis_data(
         shadowfork_file,
         network_params,
     )
+
+    plan.print(template_data)
+
     genesis_generation_template = shared_utils.new_template_and_data(
         genesis_generation_config_yml_template, template_data
     )
