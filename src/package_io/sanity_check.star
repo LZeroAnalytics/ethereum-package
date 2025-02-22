@@ -296,6 +296,7 @@ ADDITIONAL_SERVICES_PARAMS = [
     "spamoor",
     "spamoor_blob",
     "faucet",
+    "uniswap",
 ]
 
 ADDITIONAL_CATEGORY_PARAMS = {
