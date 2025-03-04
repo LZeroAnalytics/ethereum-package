@@ -782,6 +782,10 @@ assertoor_params:
   #       someCustomTestConfig: "some value"
   tests: []
 
+# Faucet params for https://github.com/LZeroAnalytics/ethereum-faucet
+faucet_params:
+  # Private key for faucet account - needs to be prefunded
+  private_key: bcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31
 
 # If set, the package will block until a finalized epoch has occurred.
 wait_for_finalization: false

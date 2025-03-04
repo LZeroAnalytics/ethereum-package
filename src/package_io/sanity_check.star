@@ -273,6 +273,9 @@ SUBCATEGORY_PARAMS = {
         "remote_signer",
         "additional_services",
     ],
+    "faucet_params": [
+        "private_key"
+    ]
 }
 
 ADDITIONAL_SERVICES_PARAMS = [

@@ -76,6 +76,7 @@ ATTR_TO_BE_SKIPPED_AT_ROOT = (
     "participants",
     "mev_params",
     "blockscout_params",
+    "faucet_params",
     "dora_params",
     "docker_cache_params",
     "assertoor_params",
@@ -121,6 +122,7 @@ def input_parser(plan, input_args):
     result["port_publisher"] = get_port_publisher_params("default")
     result["spamoor_params"] = get_default_spamoor_params()
     result["spamoor_blob_params"] = get_default_spamoor_blob_params()
+    result["faucet_params"] = get_default_faucet_params()
 
     if constants.NETWORK_NAME.shadowfork in result["network_params"]["network"]:
         shadow_base = result["network_params"]["network"].split("-shadowfork")[0]
@@ -194,6 +196,10 @@ def input_parser(plan, input_args):
             for sub_attr in input_args["ethereum_genesis_generator_params"]:
                 sub_value = input_args["ethereum_genesis_generator_params"][sub_attr]
                 result["ethereum_genesis_generator_params"][sub_attr] = sub_value
+        elif attr == "faucet_params":
+            for sub_attr in input_args["faucet_params"]:
+                sub_value = input_args["faucet_params"][sub_attr]
+                result["faucet_params"][sub_attr] = sub_value
 
     if result.get("disable_peer_scoring"):
         result = enrich_disable_peer_scoring(result)
@@ -464,6 +470,9 @@ def input_parser(plan, input_args):
             max_pending=result["spamoor_blob_params"]["max_pending"],
             max_wallets=result["spamoor_blob_params"]["max_wallets"],
             spamoor_extra_args=result["spamoor_blob_params"]["spamoor_extra_args"],
+        ),
+        faucet_params=struct(
+            private_key=result["faucet_params"]["private_key"],
         ),
         additional_services=result["additional_services"],
         wait_for_finalization=result["wait_for_finalization"],
@@ -1179,6 +1188,10 @@ def get_default_blockscout_params():
         "frontend_url": ""
     }
 
+def get_default_faucet_params():
+    return {
+        "private_key": "bcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31",
+    }
 
 def get_default_xatu_sentry_params():
     return {

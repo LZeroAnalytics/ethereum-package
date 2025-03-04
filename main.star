@@ -699,7 +699,7 @@ def run(plan, args={}):
             faucet.launch_faucet(
                 plan,
                 network_id,
-                prefunded_accounts[0].private_key,
+                args_with_right_defaults.faucet_params.private_key,
                 all_participants[0].el_context.ip_addr,
                 all_participants[0].el_context.rpc_port_num,
             )
