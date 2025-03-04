@@ -169,6 +169,7 @@ def get_config(
                    or launcher.builder_type == constants.COMMIT_BOOST_MEV_TYPE
                 else ""
             ),
+            "--rpc.gascap=500000000",
             "--ws",
             "--ws.addr=0.0.0.0",
             "--ws.port={0}".format(WS_PORT_NUM),
