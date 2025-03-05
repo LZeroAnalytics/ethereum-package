@@ -79,6 +79,7 @@ PATH_TO_PARSED_BEACON_STATE = "/genesis/output/parsedBeaconState.json"
 
 
 def run(plan, args={}):
+    plan.print(args)
     """Launches an arbitrarily complex ethereum testnet based on the arguments provided
 
     Args:
@@ -700,7 +701,6 @@ def run(plan, args={}):
                 plan,
                 network_id,
                 args_with_right_defaults.faucet_params.private_key,
-                args_with_right_defaults.faucet_params.address,
                 all_participants[0].el_context.ip_addr,
                 all_participants[0].el_context.rpc_port_num,
             )
