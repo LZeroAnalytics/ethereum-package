@@ -65,8 +65,6 @@ spamoor = import_module("./src/spamoor/spamoor.star")
 
 faucet = import_module("./src/faucet/faucet_launcher.star")
 
-uniswap = import_module("github.com/LZeroAnalytics/uniswap-package/main.star")
-
 GRAFANA_USER = "admin"
 GRAFANA_PASSWORD = "admin"
 GRAFANA_DASHBOARD_PATH_URL = "/d/QdTOwy-nz/eth2-merge-kurtosis-module-dashboard?orgId=1"
@@ -702,11 +700,6 @@ def run(plan, args={}):
                 prefunded_accounts[0].private_key,
                 all_participants[0].el_context.ip_addr,
                 all_participants[0].el_context.rpc_port_num,
-            )
-        elif additional_service == "uniswap":
-            uniswap.run(
-                plan,
-                rpc_url="http://{}:{}".format(all_participants[0].el_context.ip_addr, all_participants[0].el_context.rpc_port_num)
             )
 
         else:
