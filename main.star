@@ -701,6 +701,8 @@ def run(plan, args={}):
                 all_participants[0].el_context.ip_addr,
                 all_participants[0].el_context.rpc_port_num,
             )
+        elif additional_service == "uniswap":
+            plan.print("Coming soon")
 
         else:
             fail("Invalid additional service %s" % (additional_service))
