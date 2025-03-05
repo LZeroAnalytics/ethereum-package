@@ -1,4 +1,4 @@
-def launch_faucet(plan, chain_id, private_key, node_ip, rpc_port):
+def launch_faucet(plan, chain_id, private_key, address, node_ip, rpc_port):
 
     node_url = "http://{}:{}".format(node_ip, rpc_port)
     plan.add_service(
@@ -6,7 +6,7 @@ def launch_faucet(plan, chain_id, private_key, node_ip, rpc_port):
         config = ServiceConfig(
             image = "tiljordan/ethereum-faucet:v1.13.0",
             ports = {
-                "api": PortSpec(number=8090, transport_protocol="TCP", wait=None)
+                "api": PortSpec(number=8090, transport_protocol="TCP")
             },
             env_vars={
                 "NODE_URL": node_url,
@@ -17,3 +17,17 @@ def launch_faucet(plan, chain_id, private_key, node_ip, rpc_port):
             }
         )
     )
+
+    plan.request(
+        service_name = "faucet",
+        recipe = PostHttpRequestRecipe(
+            port_id = "api",
+            endpoint = "/fund-usdc",
+            content_type = "application/json",
+            body = "{\"address\": \"{}\", \"amount\": 1000000000}".format(address),
+        ),
+        acceptable_codes = [200],
+        description = "Sending USDC to faucet"
+    )
+
+

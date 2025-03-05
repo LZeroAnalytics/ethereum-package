@@ -700,6 +700,7 @@ def run(plan, args={}):
                 plan,
                 network_id,
                 args_with_right_defaults.faucet_params.private_key,
+                args_with_right_defaults.faucet_params.address,
                 all_participants[0].el_context.ip_addr,
                 all_participants[0].el_context.rpc_port_num,
             )

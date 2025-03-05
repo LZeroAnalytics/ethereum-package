@@ -482,6 +482,7 @@ def input_parser(plan, input_args):
         ),
         faucet_params=struct(
             private_key=result["faucet_params"]["private_key"],
+            address=result["faucet_params"]["address"],
         ),
         additional_services=result["additional_services"],
         wait_for_finalization=result["wait_for_finalization"],
@@ -1205,6 +1206,7 @@ def get_default_uniswap_params():
 def get_default_faucet_params():
     return {
         "private_key": "bcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31",
+        "address": "0x8943545177806ED17B9F23F0a21ee5948eCaa776",
     }
 
 def get_default_xatu_sentry_params():

@@ -277,7 +277,8 @@ SUBCATEGORY_PARAMS = {
         "additional_services",
     ],
     "faucet_params": [
-        "private_key"
+        "private_key",
+        "address",
     ]
 }
 
