@@ -1,0 +1,15 @@
+participants:
+  - el_type: reth
+    el_image: tiljordan/reth:forking-dev
+    el_extra_env_vars:
+      FORKING_RPC_URL: <ETHEREUM FORKING URL>
+      FORKING_BLOCK_HEIGHT: "latest"
+    cl_type: lighthouse
+network_params:
+  prefunded_accounts: '{"0xe1A74e1FCB254CB1e5eb1245eaAe034A4D7dD538": {"balance": "1000000000ETH"}}'
+faucet_params:
+  private_key: 1cdf65ac75f477650040ebe272ddaffb6735dcf55bd651869963ada71944e6db
+  address: 0xe1A74e1FCB254CB1e5eb1245eaAe034A4D7dD538
+global_log_level: debug
+additional_services:
+  - faucet
