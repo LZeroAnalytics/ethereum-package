@@ -209,7 +209,10 @@ SUBCATEGORY_PARAMS = {
     ],
     "blockscout_params": [
         "backend_url",
-        "frontend_url"
+        "frontend_url",
+    ],
+    "uniswap_params": [
+        "backend_url",
     ],
     "assertoor_params": [
         "image",

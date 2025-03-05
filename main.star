@@ -706,7 +706,8 @@ def run(plan, args={}):
         elif additional_service == "uniswap":
             uniswap.run(
                 plan,
-                rpc_url="http://{}:{}".format(all_participants[0].el_context.ip_addr, all_participants[0].el_context.rpc_port_num)
+                rpc_url="http://{}:{}".format(all_participants[0].el_context.ip_addr, all_participants[0].el_context.rpc_port_num),
+                backend_url=args_with_right_defaults.uniswap_params.backend_url
             )
 
         else:

@@ -76,6 +76,7 @@ ATTR_TO_BE_SKIPPED_AT_ROOT = (
     "participants",
     "mev_params",
     "blockscout_params",
+    "uniswap_params",
     "faucet_params",
     "dora_params",
     "docker_cache_params",
@@ -96,6 +97,7 @@ def input_parser(plan, input_args):
     result = parse_network_params(plan, input_args)
     # add default eth2 input params
     result["blockscout_params"] = get_default_blockscout_params()
+    result["uniswap_params"] = get_default_uniswap_params()
     result["dora_params"] = get_default_dora_params()
     result["docker_cache_params"] = get_default_docker_cache_params()
     result["mev_params"] = get_default_mev_params(
@@ -146,6 +148,10 @@ def input_parser(plan, input_args):
             for sub_attr in input_args["blockscout_params"]:
                 sub_value = input_args["blockscout_params"][sub_attr]
                 result["blockscout_params"][sub_attr] = sub_value
+        elif attr == "uniswap_params":
+            for sub_attr in input_args["uniswap_params"]:
+                sub_value = input_args["uniswap_params"][sub_attr]
+                result["uniswap_params"][sub_attr] = sub_value
         elif attr == "dora_params":
             for sub_attr in input_args["dora_params"]:
                 sub_value = input_args["dora_params"][sub_attr]
@@ -431,6 +437,9 @@ def input_parser(plan, input_args):
         blockscout_params=struct(
             backend_url=result["blockscout_params"]["backend_url"],
             frontend_url=result["blockscout_params"]["frontend_url"]
+        ),
+        uniswap_params=struct(
+            backend_url=result["uniswap_params"]["backend_url"],
         ),
         apache_port=result["apache_port"],
         assertoor_params=struct(
@@ -1186,6 +1195,11 @@ def get_default_blockscout_params():
     return {
         "backend_url": "",
         "frontend_url": ""
+    }
+
+def get_default_uniswap_params():
+    return {
+        "backend_url": "",
     }
 
 def get_default_faucet_params():
