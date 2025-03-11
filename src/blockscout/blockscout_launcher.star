@@ -273,7 +273,8 @@ def get_config_frontend(
         "NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL": "ETH",
         "NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS": "18",
         "NEXT_PUBLIC_IS_TESTNET": "true",
-        "NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL": "wss"
+        "NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL": "wss",
+        "NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID": "8797041ccbddc4db3ef88d4473c614f5"
     }
 
     public_ports = shared_utils.get_additional_service_standard_public_port(
