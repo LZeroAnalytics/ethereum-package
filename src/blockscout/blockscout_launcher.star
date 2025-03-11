@@ -140,7 +140,8 @@ def launch_blockscout(
         blockscout_params.frontend_url,
         global_node_selectors,
         port_publisher,
-        additional_service_index
+        additional_service_index,
+        el_client_rpc_url
     )
     frontend_service = plan.add_service(SERVICE_NAME_BLOCKSCOUT_FRONTEND, config_frontend)
     plan.print(frontend_service)
@@ -261,20 +262,25 @@ def get_config_frontend(
     node_selectors,
     port_publisher,
     additional_service_index,
+    el_client_rpc_url,
 ):
     env_vars = {
         "NEXT_PUBLIC_API_HOST": backend_hostname,
         "NEXT_PUBLIC_NETWORK_ID": "3151908",
         "NEXT_PUBLIC_APP_HOST": app_hostname,
         "NEXT_PUBLIC_API_PROTOCOL": "https",
-        "NEXT_PUBLIC_NETWORK_NAME": "LZero",
-        "NEXT_PUBLIC_NETWORK_SHORT_NAME": "LZero",
+        "NEXT_PUBLIC_NETWORK_NAME": "Bloctopus",
+        "NEXT_PUBLIC_NETWORK_SHORT_NAME": "Bloctopus",
         "NEXT_PUBLIC_NETWORK_CURRENCY_NAME": "Ether",
         "NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL": "ETH",
         "NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS": "18",
         "NEXT_PUBLIC_IS_TESTNET": "true",
         "NEXT_PUBLIC_API_WEBSOCKET_PROTOCOL": "wss",
-        "NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID": "8797041ccbddc4db3ef88d4473c614f5"
+        "NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID": "8797041ccbddc4db3ef88d4473c614f5",
+        "NEXT_PUBLIC_NETWORK_RPC_URL": el_client_rpc_url,
+        "NEXT_PUBLIC_AD_BANNER_PROVIDER": "none",
+        "NEXT_PUBLIC_AD_TEXT_PROVIDER": "none",
+
     }
 
     public_ports = shared_utils.get_additional_service_standard_public_port(
