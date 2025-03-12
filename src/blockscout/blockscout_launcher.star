@@ -262,7 +262,7 @@ def get_config_frontend(
     port_publisher,
     additional_service_index
 ):
-    rpc_url = backend_hostname.replace("blockscout-backend", "rpc")
+    rpc_url = "https://" + backend_hostname.replace("blockscout-backend", "rpc")
     env_vars = {
         "NEXT_PUBLIC_API_HOST": backend_hostname,
         "NEXT_PUBLIC_NETWORK_ID": "3151908",
