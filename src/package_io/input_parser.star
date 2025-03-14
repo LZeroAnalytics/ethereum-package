@@ -436,7 +436,8 @@ def input_parser(plan, input_args):
         ),
         blockscout_params=struct(
             backend_url=result["blockscout_params"]["backend_url"],
-            frontend_url=result["blockscout_params"]["frontend_url"]
+            frontend_url=result["blockscout_params"]["frontend_url"],
+            wallet_connect_id=result["blockscout_params"]["wallet_connect_id"]
         ),
         uniswap_params=struct(
             backend_url=result["uniswap_params"]["backend_url"],
@@ -1194,7 +1195,8 @@ def get_default_grafana_params():
 def get_default_blockscout_params():
     return {
         "backend_url": "",
-        "frontend_url": ""
+        "frontend_url": "",
+        "wallet_connect_id": ""
     }
 
 def get_default_uniswap_params():

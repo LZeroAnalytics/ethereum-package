@@ -1,40 +1,22 @@
-# Ethereum Package
+# Bloctopus Ethereum Package
 
-![Run of the Ethereum Network Package](run.gif)
+This project is a fork of the ethpandaops [Ethereum Package](https://github.com/ethpandaops/ethereum-package).
 
-This is a [Kurtosis][kurtosis-repo] package that will spin up a private Ethereum testnet over Docker or Kubernetes with multi-client support, Flashbot's `mev-boost` infrastructure for PBS-related testing/validation, and other useful network tools (transaction spammer, monitoring tools, etc). Kurtosis packages are entirely reproducible and composable, so this will work the same way over Docker or Kubernetes, in the cloud or locally on your machine.
+It is fully synced with the original ethereum package and provides the same capabilities. Additionally, this package adds additional features. Specifically, it enables:
 
-You now have the ability to spin up a private Ethereum testnet or public devnet/testnet (e.g. Goerli, Holesky, Sepolia, dencun-devnet-12, verkle-gen-devnet-2 etc) with a single command. This package is designed to be used for testing, validation, and development of Ethereum clients, and is not intended for production use. For more details check network_params.network in the [configuration section](./README.md#configuration).
-
-Specifically, this [package][package-reference] will:
-
-1. Generate Execution Layer (EL) & Consensus Layer (CL) genesis information using [the Ethereum genesis generator](https://github.com/ethpandaops/ethereum-genesis-generator).
-2. Configure & bootstrap a network of Ethereum nodes of *n* size using the genesis data generated above
-3. Spin up a [transaction spammer](https://github.com/MariusVanDerWijden/tx-fuzz) to send fake transactions to the network
-4. Spin up and connect a [testnet verifier](https://github.com/ethereum/merge-testnet-verifier)
-5. Spin up a Grafana and Prometheus instance to observe the network
-6. Spin up a Blobscan instance to analyze blob transactions (EIP-4844)
-
-Optional features (enabled via flags or parameter files at runtime):
-
-* Block until the Beacon nodes finalize an epoch (i.e. finalized_epoch > 0)
-* Spin up & configure parameters for the infrastructure behind Flashbot's implementation of PBS using `mev-boost`, in either `full` or `mock` mode. More details [here](./README.md#proposer-builder-separation-pbs-implementation-via-flashbots-mev-boost-protocol).
-* Spin up & connect the network to a [beacon metrics gazer service](https://github.com/dapplion/beacon-metrics-gazer) to collect network-wide participation metrics.
-* Spin up and connect a [JSON RPC Snooper](https://github.com/ethDreamer/json_rpc_snoop) to the network log responses & requests between the EL engine API and the CL client.
-* Specify extra parameters to be passed in for any of the: CL client Beacon, and CL client validator, and/or EL client containers
-* Specify the required parameters for the nodes to reach an external block building network
-* Generate keystores for each node in parallel
+- Fork any public EVM-based network (using a custom Reth client)
+- A faucet for ETH and USDC (refer to the [docs](https://github.com/LZeroAnalytics/ethereum-faucet))
+- A fully functional Uniswap interface (requires forking, only available in cloud environments)
+- Blockscout explorer (only available in cloud environments)
 
 ## Quickstart
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/new/?editor=code#https://github.com/ethpandaops/ethereum-package)
 
 1. [Install Docker & start the Docker Daemon if you haven't done so already][docker-installation]
 2. [Install the Kurtosis CLI, or upgrade it to the latest version if it's already installed][kurtosis-cli-installation]
 3. Run the package with default configurations from the command line:
 
    ```bash
-   kurtosis run --enclave my-testnet github.com/ethpandaops/ethereum-package
+   kurtosis run --enclave my-testnet github.com/LZeroAnalytics/ethereum-package
    ```
 
 #### Run with your own configuration
@@ -42,68 +24,11 @@ Optional features (enabled via flags or parameter files at runtime):
 Kurtosis packages are parameterizable, meaning you can customize your network and its behavior to suit your needs by storing parameters in a file that you can pass in at runtime like so:
 
 ```bash
-kurtosis run --enclave my-testnet github.com/ethpandaops/ethereum-package --args-file network_params.yaml
+kurtosis run --enclave my-testnet github.com/LZeroAnalytics/ethereum-package --args-file network_params.yaml
 ```
 
 Where `network_params.yaml` contains the parameters for your network in your home directory.
 
-#### Run on Kubernetes
-
-Kurtosis packages work the same way over Docker or on Kubernetes. Please visit our [Kubernetes docs](https://docs.kurtosis.com/k8s) to learn how to spin up a private testnet on a Kubernetes cluster.
-
-#### Considerations for Running on a Public Testnet with a Cloud Provider
-When running on a public testnet using a cloud provider's Kubernetes cluster, there are a few important factors to consider:
-
-1. State Growth: The growth of the state might be faster than anticipated. This could potentially lead to issues if the default parameters become insufficient over time. It's important to monitor state growth and adjust parameters as necessary.
-
-2. Persistent Storage Speed: Most cloud providers provision their Kubernetes clusters with relatively slow persistent storage by default. This can cause performance issues, particularly with Execution Layer (EL) clients.
-
-3. Network Syncing: The disk speed provided by cloud providers may not be sufficient to sync with networks that have high demands, such as the mainnet. This could lead to syncing issues and delays.
-
-To mitigate these issues, you can use the `el_volume_size` and `cl_volume_size` flags to override the default settings locally. This allows you to allocate more storage to the EL and CL clients, which can help accommodate faster state growth and improve syncing performance. However, keep in mind that increasing the volume size may also increase your cloud provider costs. Always monitor your usage and adjust as necessary to balance performance and cost.
-
-For optimal performance, we recommend using a cloud provider that allows you to provision Kubernetes clusters with fast persistent storage or self hosting your own Kubernetes cluster with fast persistent storage.
-
-### Shadowforking
-In order to enable shadowfork capabilities, you can use the `network_params.network` flag. The expected value is the name of the network you want to shadowfork followed by `-shadowfork`. Please note that `persistent` configuration parameter has to be enabled for shadowforks to work! Current limitation on k8s is it is only working on a single node cluster. For example, to shadowfork the Holesky testnet, you can use the following command:
-```yaml
-...
-network_params:
-  network: "holesky-shadowfork"
-persistent: true
-...
-```
-
-##### Shadowforking custom verkle networks
-In order to enable shadowfork capabilities for verkle networks, you need to define electra and mention verkle in the network name after shadowfork.
-```yaml
-...
-network_params:
-  electra_fork_epoch: 1
-  network: "holesky-shadowfork-verkle"
-persistent: true
-...
-```
-
-#### Taints and tolerations
-It is possible to run the package on a Kubernetes cluster with taints and tolerations. This is done by adding the tolerations to the `tolerations` field in the `network_params.yaml` file. For example:
-```yaml
-participants:
-  - el_type: reth
-    cl_type: teku
-global_tolerations:
-  - key: "node-role.kubernetes.io/master6"
-    value: "true"
-    operator: "Equal"
-    effect: "NoSchedule"
-```
-
-It is possible to define toleration globally, per participant or per container. The order of precedence is as follows:
-1. Container (`el_tolerations`, `cl_tolerations`, `vc_tolerations`)
-2. Participant (`tolerations`)
-3. Global (`global_tolerations`)
-
-This feature is only available for Kubernetes. To learn more about taints and tolerations, please visit the [Kubernetes documentation](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/).
 
 #### Tear down
 
@@ -145,18 +70,37 @@ For example, to retrieve the Execution Layer (EL) genesis data, run:
 kurtosis files download my-testnet el-genesis-data ~/Downloads
 ```
 
-# Basic file sharing
-
-Apache is included in the package to allow for basic file sharing. The Apache service is started when additional services are enabled. It will expose the network-configs directory, which might needed if you want to share the network config publicly.
-
-```yaml
-additional_services:
-  - apache
-```
-
 ## Configuration
 
-To configure the package behaviour, you can modify your `network_params.yaml` file. The full YAML schema that can be passed in is as follows with the defaults provided:
+To configure the package behaviour, you can modify your `network_params.yaml` file. Below is an example of a
+configuration that uses the additional features available in this package:
+
+```yaml
+participants:
+  - el_type: reth
+    el_image: tiljordan/reth-forking:1.0.0
+    el_extra_env_vars:
+      FORKING_RPC_URL: <FORKING URL> # e.g. Alchemy endpoint
+      FORKING_BLOCK_HEIGHT: "latest" # Specify any previous block height
+    cl_type: lighthouse
+network_params:
+  prefunded_accounts: '{"0xe1A74e1FCB254CB1e5eb1245eaAe034A4D7dD538": {"balance": "1000000000ETH"}}'
+faucet_params:
+  private_key: 1cdf65ac75f477650040ebe272ddaffb6735dcf55bd651869963ada71944e6db # Needs to be a prefunded account
+blockscout_params:
+  backend_url: <BLOCKSCOUT BACKEND URL> # URL at which the blockscout backend will be available
+  frontend_url: <BLOCKSCOUT FRONTEND URL> # URL at which the blockscout frontend will be available
+uniswap_params:
+  backend_url: <UNISWAP BACKEND URL> # URL at which the backend service will be available
+
+additional_services:
+  - faucet
+  - blockscout
+  - uniswap
+
+```
+
+The full YAML schema that can be passed in is as follows with the defaults provided:
 
 ```yaml
 # Specification of the participants in the network
@@ -175,6 +119,8 @@ participants:
     # - reth: ghcr.io/paradigmxyz/reth
     # - ethereumjs: ethpandaops/ethereumjs:master
     # - nimbus-eth1: ethpandaops/nimbus-eth1:master
+    # If you want to use forking capabilities use:
+    # - tiljordan/reth-forking:1.0.0
     el_image: ""
 
     # The log level string that this participant's EL client should log at
@@ -660,18 +606,17 @@ additional_services:
   - forky
   - apache
   - tracoor
+  - faucet
+  - uniswap
 
 # Configuration place for blockscout explorer - https://github.com/blockscout/blockscout
 blockscout_params:
-  # blockscout docker image to use
-  # Defaults to blockscout/blockscout:latest
-  image: "blockscout/blockscout:latest"
-  # blockscout smart contract verifier image to use
-  # Defaults to ghcr.io/blockscout/smart-contract-verifier:latest
-  verif_image: "ghcr.io/blockscout/smart-contract-verifier:latest"
-  # Frontend image
-  # Defaults to ghcr.io/blockscout/frontend:latest
-  frontend_image: "ghcr.io/blockscout/frontend:latest"
+  # The URL where the blockscout backend will be available
+  backend_url: "blockscout/blockscout:latest"
+  # The URL where the blockscout frontend will be available
+  frontend_url: "ghcr.io/blockscout/smart-contract-verifier:latest"
+  # A reown (wallet connect) project id to enable wallet features
+  wallet_connect_id: "ghcr.io/blockscout/frontend:latest"
 
 # Configuration place for dora the explorer - https://github.com/ethpandaops/dora
 dora_params:
@@ -787,6 +732,10 @@ faucet_params:
   # Private key for faucet account - needs to be prefunded
   private_key: bcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31
 
+# Uniswap params for https://github.com/LZeroAnalytics/uniswap-package
+uniswap_params:
+  # URL at which the backend service will be available
+  backend_url: <UNISWAP BACKEND URL>
 # If set, the package will block until a finalized epoch has occurred.
 wait_for_finalization: false
 
@@ -990,7 +939,7 @@ spamoor_blob_params:
 # Ethereum genesis generator params
 ethereum_genesis_generator_params:
   # The image to use for ethereum genesis generator
-  image: ethpandaops/ethereum-genesis-generator:3.7.0
+  image: tiljordan/ethereum-genesis-generator:3.7.1
 
 # Global parameter to set the exit ip address of services and public ports
 port_publisher:
@@ -1132,139 +1081,6 @@ ethereum_metrics_exporter_enabled: true
 ```
 
 </details>
-
-## Beacon Node <> Validator Client compatibility
-
-|               | Lighthouse VC | Prysm VC | Teku VC | Lodestar VC | Nimbus VC
-|---------------|---------------|----------|---------|-------------|-----------|
-| Lighthouse BN | ✅            | ❌       | ✅      | ✅          | ✅
-| Prysm BN      | ✅            | ✅       | ✅      | ✅          | ✅
-| Teku BN       | ✅            | ✅       | ✅      | ✅          | ✅
-| Lodestar BN   | ✅            | ✅       | ✅      | ✅          | ✅
-| Nimbus BN     | ✅            | ✅       | ✅      | ✅          | ✅
-| Grandine BN   | ✅            | ✅       | ✅      | ✅          | ✅
-
-## Custom labels for Docker and Kubernetes
-
-There are 4 custom labels that can be used to identify the nodes in the network. These labels are used to identify the nodes in the network and can be used to run chaos tests on specific nodes. An example for these labels are as follows:
-
-Execution Layer (EL) nodes:
-
-```sh
-  "com.kurtosistech.custom.ethereum-package-client": "geth",
-  "com.kurtosistech.custom.ethereum-package-client-image": "ethereum-client-go-latest",
-  "com.kurtosistech.custom.ethereum-package-client-type": "execution",
-  "com.kurtosistech.custom.ethereum-package-connected-client": "lighthouse",
-```
-
-Consensus Layer (CL) nodes - Beacon:
-
-```sh
-  "com.kurtosistech.custom.ethereum-package-client": "lighthouse",
-  "com.kurtosistech.custom.ethereum-package-client-image": "sigp-lighthouse-latest",
-  "com.kurtosistech.custom.ethereum-package-client-type": "beacon",
-  "com.kurtosistech.custom.ethereum-package-connected-client": "geth",
-```
-
-Consensus Layer (CL) nodes - Validator:
-
-```sh
-  "com.kurtosistech.custom.ethereum-package-client": "lighthouse",
-  "com.kurtosistech.custom.ethereum-package-client-image": "sigp-lighthouse-latest",
-  "com.kurtosistech.custom.ethereum-package-client-type": "validator",
-  "com.kurtosistech.custom.ethereum-package-connected-client": "geth",
-```
-
-`ethereum-package-client` describes which client is running on the node.
-`ethereum-package-client-image` describes the image that is used for the client.
-`ethereum-package-client-type` describes the type of client that is running on the node (`execution`,`beacon` or `validator`).
-`ethereum-package-connected-client` describes the CL/EL client that is connected to the EL/CL client.
-
-## Proposer Builder Separation (PBS) emulation
-
-To spin up the network of Ethereum nodes with an external block building network (using Flashbot's `mev-boost` protocol), simply use:
-
-```
-kurtosis run github.com/ethpandaops/ethereum-package '{"mev_type": "full"}'
-```
-
-Starting your network up with `"mev_type": "full"` will instantiate and connect the following infrastructure to your network:
-
-1. `Flashbot's block builder & CL validator + beacon` - A modified Geth client that builds blocks. The CL validator and beacon clients are lighthouse clients configured to receive payloads from the relay.
-2. `mev-relay-api` - Services that provide APIs for (a) proposers, (b) block builders, (c) data
-3. `mev-relay-website` - A website to monitor payloads that have been delivered
-4. `mev-relay-housekeeper` - Updates known validators, proposer duties, and more in the background. Only a single instance of this should run.
-5. `mev-boost` - open-source middleware instantiated for each EL/Cl pair in the network, including the builder
-6. `mev-flood` - Deploys UniV2 smart contracts, provisions liquidity on UniV2 pairs, & sends a constant stream of UniV2 swap transactions to the network's public mempool.
-
-<details>
-    <summary>Caveats when using "mev_type": "full"</summary>
-
-* Validators (64 per node by default, so 128 in the example in this guide) will get registered with the relay automatically after the 1st epoch. This registration process is simply a configuration addition to the mev-boost config - which Kurtosis will automatically take care of as part of the set up. This means that the mev-relay infrastructure only becomes aware of the existence of the validators after the 1st epoch.
-* After the 3rd epoch, the mev-relay service will begin to receive execution payloads (eth_sendPayload, which does not contain transaction content) from the mev-builder service (or mock-builder in mock-mev mode).
-* Validators will start to receive validated execution payload headers from the mev-relay service (via mev-boost) after the 4th epoch. The validator selects the most valuable header, signs the payload, and returns the signed header to the relay - effectively proposing the payload of transactions to be included in the soon-to-be-proposed block. Once the relay verifies the block proposer's signature, the relay will respond with the full execution payload body (incl. the transaction contents) for the validator to use when proposing a SignedBeaconBlock to the network.
-
-</details>
-
-This package also supports a `"mev_type": "mock"` mode that will only bring up:
-
-1. `mock-builder` - a server that listens for builder API directives and responds with payloads built using an execution client
-1. `mev-boost` - for every EL/CL pair launched
-
-For more details, including a guide and architecture of the `mev-boost` infrastructure, go [here](https://docs.kurtosis.com/how-to-full-mev-with-ethereum-package/).
-
-## Pre-funded accounts at Genesis
-
-This package comes with [21 prefunded keys for testing](https://github.com/ethpandaops/ethereum-package/blob/main/src/prelaunch_data_generator/genesis_constants/genesis_constants.star).
-
-Here's a table of where the keys are used
-
-| Account Index | Component Used In   | Private Key Used | Public Key Used | Comment                     |
-|---------------|---------------------|------------------|-----------------|-----------------------------|
-| 0             | Builder             | ✅                |                 | As coinbase                |
-| 0             | mev_custom_flood    |                   | ✅              | As the receiver of balance |
-| 1             | blob_spammer        | ✅                |                 | As the sender of blobs     |
-| 3             | transaction_spammer | ✅                |                 | To spam transactions with  |
-| 4             | spamoor_blob        | ✅                |                 | As the sender of blobs     |
-| 6             | mev_flood           | ✅                |                 | As the contract owner      |
-| 7             | mev_flood           | ✅                |                 | As the user_key            |
-| 8             | assertoor           | ✅                | ✅              | As the funding for tests   |
-| 11            | mev_custom_flood    | ✅                |                 | As the sender of balance   |
-| 12            | l2_contracts        | ✅                |                 | Contract deployer address  |
-| 13            | spamoor             | ✅                |                 | Spams transactions         |
-
-## Developing On This Package
-
-First, install prerequisites:
-
-1. [Install Kurtosis itself][kurtosis-cli-installation]
-
-Then, run the dev loop:
-
-1. Make your code changes
-1. Rebuild and re-run the package by running the following from the root of the repo:
-
-   ```bash
-   kurtosis run . "{}"
-   ```
-
-   NOTE 1: You can change the value of the second positional argument flag to pass in extra configuration to the package per the "Configuration" section above!
-   NOTE 2: The second positional argument accepts JSON.
-
-To get detailed information about the structure of the package, visit [the architecture docs](./docs/architecture.md).
-
-When you're happy with your changes:
-
-1. Create a PR
-1. Add one of the maintainers of the repo as a "Review Request":
-   * `parithosh` (Ethereum Foundation)
-   * `barnabasbusa` (Ethereum Foundation)
-   * `pk910` (Ethereum Foundation)
-   * `samcm` (Ethereum Foundation)
-   * `h4ck3rk3y` (Kurtosis)
-   * `mieubrisse` (Kurtosis)
-   * `leederek` (Kurtosis)
-1. Once everything works, merge!
 
 <!------------------------ Only links below here -------------------------------->
 

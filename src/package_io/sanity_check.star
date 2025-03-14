@@ -210,6 +210,7 @@ SUBCATEGORY_PARAMS = {
     "blockscout_params": [
         "backend_url",
         "frontend_url",
+        "wallet_connect_id",
     ],
     "uniswap_params": [
         "backend_url",
