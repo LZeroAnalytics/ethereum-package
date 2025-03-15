@@ -26,7 +26,7 @@ DEFAULT_CL_IMAGES = {
 }
 
 DEFAULT_CL_IMAGES_MINIMAL = {
-    "lighthouse": "ethpandaops/lighthouse:stable",
+    "lighthouse": "ethpandaops/lighthouse:unstable",
     "teku": "consensys/teku:latest",
     "nimbus": "ethpandaops/nimbus-eth2:stable-minimal",
     "prysm": "ethpandaops/prysm-beacon-chain:develop-minimal",
@@ -45,7 +45,7 @@ DEFAULT_VC_IMAGES = {
 }
 
 DEFAULT_VC_IMAGES_MINIMAL = {
-    "lighthouse": "ethpandaops/lighthouse:stable",
+    "lighthouse": "ethpandaops/lighthouse:unstable",
     "lodestar": "chainsafe/lodestar:latest",
     "nimbus": "ethpandaops/nimbus-validator-client:stable-minimal",
     "prysm": "ethpandaops/prysm-validator:develop-minimal",
@@ -76,6 +76,8 @@ ATTR_TO_BE_SKIPPED_AT_ROOT = (
     "participants",
     "mev_params",
     "blockscout_params",
+    "uniswap_params",
+    "faucet_params",
     "dora_params",
     "docker_cache_params",
     "assertoor_params",
@@ -95,6 +97,7 @@ def input_parser(plan, input_args):
     result = parse_network_params(plan, input_args)
     # add default eth2 input params
     result["blockscout_params"] = get_default_blockscout_params()
+    result["uniswap_params"] = get_default_uniswap_params()
     result["dora_params"] = get_default_dora_params()
     result["docker_cache_params"] = get_default_docker_cache_params()
     result["mev_params"] = get_default_mev_params(
@@ -121,6 +124,7 @@ def input_parser(plan, input_args):
     result["port_publisher"] = get_port_publisher_params("default")
     result["spamoor_params"] = get_default_spamoor_params()
     result["spamoor_blob_params"] = get_default_spamoor_blob_params()
+    result["faucet_params"] = get_default_faucet_params()
 
     if constants.NETWORK_NAME.shadowfork in result["network_params"]["network"]:
         shadow_base = result["network_params"]["network"].split("-shadowfork")[0]
@@ -144,6 +148,10 @@ def input_parser(plan, input_args):
             for sub_attr in input_args["blockscout_params"]:
                 sub_value = input_args["blockscout_params"][sub_attr]
                 result["blockscout_params"][sub_attr] = sub_value
+        elif attr == "uniswap_params":
+            for sub_attr in input_args["uniswap_params"]:
+                sub_value = input_args["uniswap_params"][sub_attr]
+                result["uniswap_params"][sub_attr] = sub_value
         elif attr == "dora_params":
             for sub_attr in input_args["dora_params"]:
                 sub_value = input_args["dora_params"][sub_attr]
@@ -194,6 +202,10 @@ def input_parser(plan, input_args):
             for sub_attr in input_args["ethereum_genesis_generator_params"]:
                 sub_value = input_args["ethereum_genesis_generator_params"][sub_attr]
                 result["ethereum_genesis_generator_params"][sub_attr] = sub_value
+        elif attr == "faucet_params":
+            for sub_attr in input_args["faucet_params"]:
+                sub_value = input_args["faucet_params"][sub_attr]
+                result["faucet_params"][sub_attr] = sub_value
 
     if result.get("disable_peer_scoring"):
         result = enrich_disable_peer_scoring(result)
@@ -424,7 +436,11 @@ def input_parser(plan, input_args):
         ),
         blockscout_params=struct(
             backend_url=result["blockscout_params"]["backend_url"],
-            frontend_url=result["blockscout_params"]["frontend_url"]
+            frontend_url=result["blockscout_params"]["frontend_url"],
+            wallet_connect_id=result["blockscout_params"]["wallet_connect_id"]
+        ),
+        uniswap_params=struct(
+            backend_url=result["uniswap_params"]["backend_url"],
         ),
         apache_port=result["apache_port"],
         assertoor_params=struct(
@@ -464,6 +480,9 @@ def input_parser(plan, input_args):
             max_pending=result["spamoor_blob_params"]["max_pending"],
             max_wallets=result["spamoor_blob_params"]["max_wallets"],
             spamoor_extra_args=result["spamoor_blob_params"]["spamoor_extra_args"],
+        ),
+        faucet_params=struct(
+            private_key=result["faucet_params"]["private_key"],
         ),
         additional_services=result["additional_services"],
         wait_for_finalization=result["wait_for_finalization"],
@@ -552,7 +571,7 @@ def parse_network_params(plan, input_args):
 
     for attr in input_args:
         value = input_args[attr]
-        # if its insterted we use the value inserted
+        # if its inserted we use the value inserted
         if attr not in ATTR_TO_BE_SKIPPED_AT_ROOT and attr in input_args:
             result[attr] = value
         elif attr == "network_params":
@@ -1176,9 +1195,19 @@ def get_default_grafana_params():
 def get_default_blockscout_params():
     return {
         "backend_url": "",
-        "frontend_url": ""
+        "frontend_url": "",
+        "wallet_connect_id": ""
     }
 
+def get_default_uniswap_params():
+    return {
+        "backend_url": "",
+    }
+
+def get_default_faucet_params():
+    return {
+        "private_key": "bcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31",
+    }
 
 def get_default_xatu_sentry_params():
     return {
@@ -1338,7 +1367,7 @@ def enrich_mev_extra_params(parsed_arguments_dict, mev_prefix, mev_port, mev_typ
                 "cl_extra_params": [
                     "--always-prepare-payload",
                     "--prepare-payload-lookahead",
-                    "12000",
+                    "8000",
                     "--disable-peer-scoring",
                 ],
                 "el_extra_params": parsed_arguments_dict["mev_params"][
@@ -1364,7 +1393,7 @@ def enrich_mev_extra_params(parsed_arguments_dict, mev_prefix, mev_port, mev_typ
                 "cl_extra_params": [
                     "--always-prepare-payload",
                     "--prepare-payload-lookahead",
-                    "12000",
+                    "8000",
                     "--disable-peer-scoring",
                 ],
                 "el_extra_params": parsed_arguments_dict["mev_params"][

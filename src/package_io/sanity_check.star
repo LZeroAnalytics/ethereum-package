@@ -209,7 +209,11 @@ SUBCATEGORY_PARAMS = {
     ],
     "blockscout_params": [
         "backend_url",
-        "frontend_url"
+        "frontend_url",
+        "wallet_connect_id",
+    ],
+    "uniswap_params": [
+        "backend_url",
     ],
     "assertoor_params": [
         "image",
@@ -273,6 +277,10 @@ SUBCATEGORY_PARAMS = {
         "remote_signer",
         "additional_services",
     ],
+    "faucet_params": [
+        "private_key",
+        "address",
+    ]
 }
 
 ADDITIONAL_SERVICES_PARAMS = [
