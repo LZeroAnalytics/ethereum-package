@@ -140,6 +140,7 @@ SUBCATEGORY_PARAMS = {
     "network_params": [
         "network",
         "network_id",
+        "network_type",
         "deposit_contract_address",
         "seconds_per_slot",
         "num_validator_keys_per_node",
