@@ -73,7 +73,8 @@ def launch_blockscout(
     global_node_selectors,
     port_publisher,
     additional_service_index,
-    blockscout_params
+    blockscout_params,
+    network_id
 ):
     postgres_output = postgres.run(
         plan,
@@ -137,7 +138,8 @@ def launch_blockscout(
         global_node_selectors,
         port_publisher,
         additional_service_index,
-        blockscout_params.wallet_connect_id
+        blockscout_params.wallet_connect_id,
+        network_id
     )
     frontend_service = plan.add_service(SERVICE_NAME_BLOCKSCOUT_FRONTEND, config_frontend)
     plan.print(frontend_service)
@@ -258,12 +260,13 @@ def get_config_frontend(
     node_selectors,
     port_publisher,
     additional_service_index,
-    wallet_connect_id
+    wallet_connect_id,
+    network_id
 ):
     rpc_url = "https://" + backend_hostname.replace("blockscout-backend", "rpc")
     env_vars = {
         "NEXT_PUBLIC_API_HOST": backend_hostname,
-        "NEXT_PUBLIC_NETWORK_ID": "3151908",
+        "NEXT_PUBLIC_NETWORK_ID": network_id,
         "NEXT_PUBLIC_APP_HOST": app_hostname,
         "NEXT_PUBLIC_API_PROTOCOL": "https",
         "NEXT_PUBLIC_NETWORK_NAME": "Bloctopus",
