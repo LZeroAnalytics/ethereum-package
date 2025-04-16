@@ -169,6 +169,9 @@ def new_env_file_for_el_cl_genesis_data(
         + GENESIS_CONTRACTS_FILENAME,
         "PrefundedAccounts": json.encode(network_params.prefunded_accounts),
         "MaxPayloadSize": network_params.max_payload_size,
+        "WithdrawalType": "0x01",
+        "WithdrawalAddress": "0x8943545177806ED17B9F23F0a21ee5948eCaa776"
+
     }
 
 
