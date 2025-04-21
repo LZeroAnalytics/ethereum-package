@@ -17,34 +17,22 @@ SERVICE_NAME_SMART_CONTRACT_VERIFIER = "smart-contract-verifier"
 
 # Resource Limits (Adjust as needed)
 POSTGRES_MIN_CPU = 100
-POSTGRES_MAX_CPU = 1000
 POSTGRES_MIN_MEMORY = 1024
-POSTGRES_MAX_MEMORY = 2048
 
 REDIS_MIN_CPU = 100
-REDIS_MAX_CPU = 1000
 REDIS_MIN_MEMORY = 256
-REDIS_MAX_MEMORY = 512
 
 BACKEND_MIN_CPU = 500
-BACKEND_MAX_CPU = 2000
 BACKEND_MIN_MEMORY = 2048
-BACKEND_MAX_MEMORY = 4096
 
 FRONTEND_MIN_CPU = 100
-FRONTEND_MAX_CPU = 1000
 FRONTEND_MIN_MEMORY = 512
-FRONTEND_MAX_MEMORY = 1024
 
 PROXY_MIN_CPU = 100
-PROXY_MAX_CPU = 500
 PROXY_MIN_MEMORY = 256
-PROXY_MAX_MEMORY = 512
 
 SMART_CONTRACT_VERIFIER_MIN_CPU = 100
-SMART_CONTRACT_VERIFIER_MAX_CPU = 1000
 SMART_CONTRACT_VERIFIER_MIN_MEMORY = 512
-SMART_CONTRACT_VERIFIER_MAX_MEMORY = 1024
 
 HTTP_PORT_NUMBER = 4000
 HTTP_PORT_NUMBER_VERIF = 8050
@@ -84,9 +72,7 @@ def launch_blockscout(
         persistent=persistent,
         node_selectors=global_node_selectors,
         min_cpu=POSTGRES_MIN_CPU,
-        max_cpu=POSTGRES_MAX_CPU,
         min_memory=POSTGRES_MIN_MEMORY,
-        max_memory=POSTGRES_MAX_MEMORY,
     )
 
     # Set up Redis
@@ -96,9 +82,7 @@ def launch_blockscout(
         persistent=persistent,
         node_selectors=global_node_selectors,
         min_cpu=REDIS_MIN_CPU,
-        max_cpu=REDIS_MAX_CPU,
         min_memory=REDIS_MIN_MEMORY,
-        max_memory=REDIS_MAX_MEMORY,
     )
 
     el_context = el_contexts[0]
@@ -169,9 +153,7 @@ def get_config_verif(node_selectors, port_publisher, additional_service_index):
             )
         },
         min_cpu=SMART_CONTRACT_VERIFIER_MIN_CPU,
-        max_cpu=SMART_CONTRACT_VERIFIER_MAX_CPU,
         min_memory=SMART_CONTRACT_VERIFIER_MIN_MEMORY,
-        max_memory=SMART_CONTRACT_VERIFIER_MAX_MEMORY,
         node_selectors=node_selectors,
     )
 
@@ -248,9 +230,7 @@ def get_config_backend(
         public_ports=public_ports,
         ports=USED_PORTS,
         min_cpu=BACKEND_MIN_CPU,
-        max_cpu=BACKEND_MAX_CPU,
         min_memory=BACKEND_MIN_MEMORY,
-        max_memory=BACKEND_MAX_MEMORY,
         node_selectors=node_selectors,
     )
 
@@ -302,8 +282,6 @@ def get_config_frontend(
             )
         },
         min_cpu=FRONTEND_MIN_CPU,
-        max_cpu=FRONTEND_MAX_CPU,
         min_memory=FRONTEND_MIN_MEMORY,
-        max_memory=FRONTEND_MAX_MEMORY,
         node_selectors=node_selectors,
     )
