@@ -4,7 +4,7 @@ postgres = import_module("github.com/kurtosis-tech/postgres-package/main.star")
 redis = import_module("github.com/kurtosis-tech/redis-package/main.star")
 
 # Images
-IMAGE_NAME_BLOCKSCOUT_BACKEND = "tiljordan/blockscout:latest"
+IMAGE_NAME_BLOCKSCOUT_BACKEND = "blockscout/blockscout:latest"
 IMAGE_NAME_BLOCKSCOUT_FRONTEND = "ghcr.io/blockscout/frontend:latest"
 IMAGE_NAME_BLOCKSCOUT_PROXY = "nginx"
 IMAGE_NAME_SMART_CONTRACT_VERIFIER = "ghcr.io/blockscout/smart-contract-verifier:latest"
