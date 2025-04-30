@@ -83,23 +83,23 @@ def generate_el_cl_genesis_data(
     genesis_validators_root = plan.run_sh(
         name="read-genesis-validators-root",
         description="Reading genesis validators root",
-        run="cat /data/genesis_validators_root.txt",
-        files={"/data": genesis.files_artifacts[1]},
+        run="cat /tmp/genesis_validators_root.txt",
+        files={"/tmp": genesis.files_artifacts[1]},
         wait=None,
     )
 
     prague_time = plan.run_sh(
         name="read-prague-time",
         description="Reading prague time from genesis",
-        run="jq .config.pragueTime /data/genesis.json | tr -d '\n'",
-        files={"/data": genesis.files_artifacts[0]},
+        run="jq .config.pragueTime /tmp/genesis.json | tr -d '\n'",
+        files={"/tmp": genesis.files_artifacts[0]},
     )
 
     osaka_time = plan.run_sh(
         name="read-osaka-time",
         description="Reading osaka time from genesis",
-        run="jq .config.osakaTime /data/genesis.json | tr -d '\n'",
-        files={"/data": genesis.files_artifacts[0]},
+        run="jq .config.osakaTime /tmp/genesis.json | tr -d '\n'",
+        files={"/tmp": genesis.files_artifacts[0]},
     )
 
     result = el_cl_genesis_data.new_el_cl_genesis_data(
