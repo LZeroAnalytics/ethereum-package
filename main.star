@@ -535,7 +535,8 @@ def run(plan, args={}):
                 general_args["app_host"] = blockscout_params.frontend_url
                 general_args["api_host"] = blockscout_params.backend_url
 
-            plan.print("General args: " + general_args)
+            plan.print("General args debugging")
+            plan.print(general_args)
             # Launch blockscout with the new generalized module
             blockscout_output = blockscout.run(
                 plan,
