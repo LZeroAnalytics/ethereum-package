@@ -511,12 +511,28 @@ def run(plan, args={}):
                 "client_name": all_el_contexts[0].client_name,
             }
 
+
             # Add network-specific configuration
             if hasattr(network_params, "network") and network_params.network:
                 ethereum_args["extra_env_vars"] = {
                     "NETWORK": network_params.network,
                     "SUBNETWORK": network_params.network,
                 }
+
+            general_args = {
+                "network_name": blockscout_params.network_name,
+                "network_id": str(network_id),
+                "blockscout_image": blockscout_params.blockscout_image,
+                "blockscout_verifier_image": blockscout_params.contract_verifier_image,
+                "blockscout_frontend_image": blockscout_params.frontend_image,
+                "include_frontend": blockscout_params.include_frontend,
+            }
+
+            if blockscout_params.frontend_url and blockscout_params.backend_url:
+                general_args["api_protocol"] = "https"
+                general_args["ws_protocol"] = "wss"
+                general_args["app_host"] = blockscout_params.frontend_url
+                general_args["api_host"] = blockscout_params.backend_url
 
             # Launch blockscout with the new generalized module
             blockscout_output = blockscout.run(

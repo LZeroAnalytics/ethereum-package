@@ -1229,6 +1229,8 @@ def get_default_blockscout_params():
         "contract_verifier_image": "ghcr.io/blockscout/smart-contract-verifier:latest",
         "frontend_image": "ghcr.io/blockscout/frontend:latest",
         "include_frontend": True,
+        "frontend_url": "",
+        "backend_url": "",
         "wallet_connect_id": ""
     }
 
