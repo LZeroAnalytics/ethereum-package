@@ -529,11 +529,13 @@ def run(plan, args={}):
             }
 
             if blockscout_params.frontend_url and blockscout_params.backend_url:
+                plan.print("Using public backend URL: " + blockscout_params.backend_url)
                 general_args["api_protocol"] = "https"
                 general_args["ws_protocol"] = "wss"
                 general_args["app_host"] = blockscout_params.frontend_url
                 general_args["api_host"] = blockscout_params.backend_url
 
+            plan.print("General args: " + general_args)
             # Launch blockscout with the new generalized module
             blockscout_output = blockscout.run(
                 plan,
