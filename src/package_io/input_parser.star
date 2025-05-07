@@ -447,6 +447,8 @@ def input_parser(plan, input_args):
             contract_verifier_image=result["blockscout_params"]["contract_verifier_image"],
             frontend_image=result["blockscout_params"]["frontend_image"],
             include_frontend=result["blockscout_params"]["include_frontend"],
+            frontend_url=result["blockscout_params"]["frontend_url"],
+            backend_url=result["blockscout_params"]["backend_url"],
             wallet_connect_id=result["blockscout_params"]["wallet_connect_id"]
         ),
         uniswap_params=struct(
