@@ -1227,9 +1227,9 @@ def get_default_grafana_params():
 def get_default_blockscout_params():
     return {
         "network_name": "Bloctopus",
-        "blockscout_image": "blockscout/blockscout:latest",
+        "blockscout_image": "ghcr.io/blockscout/blockscout:v7.0.2",
         "contract_verifier_image": "ghcr.io/blockscout/smart-contract-verifier:latest",
-        "frontend_image": "ghcr.io/blockscout/frontend:latest",
+        "frontend_image": "ghcr.io/blockscout/frontend:v1.38.2",
         "include_frontend": True,
         "frontend_url": "",
         "backend_url": "",
