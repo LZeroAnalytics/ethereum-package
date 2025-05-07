@@ -503,25 +503,25 @@ def run(plan, args={}):
         elif additional_service == "blockscout":
             plan.print("Launching blockscout")
             blockscout_params = args_with_right_defaults.blockscout_params
-            
+
             # Prepare ethereum arguments for blockscout
             ethereum_args = {
                 "rpc_url": all_el_contexts[0].rpc_http_url,
                 "client_name": all_el_contexts[0].client_name,
             }
-            
+
             # Add network-specific configuration
             if hasattr(network_params, "network") and network_params.network:
                 ethereum_args["extra_env_vars"] = {
                     "NETWORK": network_params.network,
                     "SUBNETWORK": network_params.network,
                 }
-            
+
             # Launch blockscout with the new generalized module
             blockscout_output = blockscout.run(
                 plan,
                 general_args={
-                    "network_name": network_params.network if hasattr(network_params, "network") else "Kurtosis",
+                    "network_name": blockscout_params.network_name if hasattr(blockscout_params, "network_name") else "Bloctopus",
                     "network_id": str(network_id),
                     "blockscout_image": blockscout_params.blockscout_image if hasattr(blockscout_params, "blockscout_image") else "blockscout/blockscout:latest",
                     "blockscout_verifier_image": blockscout_params.contract_verifier_image if hasattr(blockscout_params, "contract_verifier_image") else "ghcr.io/blockscout/smart-contract-verifier:latest",
@@ -533,10 +533,10 @@ def run(plan, args={}):
                 node_selectors=global_node_selectors,
                 port_publisher=args_with_right_defaults.port_publisher,
             )
-            
+
             blockscout_url = blockscout_output["blockscout_url"]
             blockscout_sc_verifier_url = blockscout_output["verification_url"]
-            
+
             plan.print("Successfully launched blockscout at")
             plan.print(blockscout_url)
         elif additional_service == "dora":
