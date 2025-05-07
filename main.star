@@ -521,12 +521,12 @@ def run(plan, args={}):
             blockscout_output = blockscout.run(
                 plan,
                 general_args={
-                    "network_name": blockscout_params.network_name if hasattr(blockscout_params, "network_name") else "Bloctopus",
+                    "network_name": blockscout_params.network_name,
                     "network_id": str(network_id),
-                    "blockscout_image": blockscout_params.blockscout_image if hasattr(blockscout_params, "blockscout_image") else "blockscout/blockscout:latest",
-                    "blockscout_verifier_image": blockscout_params.contract_verifier_image if hasattr(blockscout_params, "contract_verifier_image") else "ghcr.io/blockscout/smart-contract-verifier:latest",
-                    "blockscout_frontend_image": blockscout_params.frontend_image if hasattr(blockscout_params, "frontend_image") else "ghcr.io/blockscout/frontend:latest",
-                    "include_frontend": blockscout_params.include_frontend if hasattr(blockscout_params, "include_frontend") else True,
+                    "blockscout_image": blockscout_params.blockscout_image,
+                    "blockscout_verifier_image": blockscout_params.contract_verifier_image,
+                    "blockscout_frontend_image": blockscout_params.frontend_image,
+                    "include_frontend": blockscout_params.include_frontend,
                 },
                 ethereum_args=ethereum_args,
                 persistent=persistent,

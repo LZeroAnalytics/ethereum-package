@@ -442,8 +442,11 @@ def input_parser(plan, input_args):
             image=result["grafana_params"]["image"],
         ),
         blockscout_params=struct(
-            backend_url=result["blockscout_params"]["backend_url"],
-            frontend_url=result["blockscout_params"]["frontend_url"],
+            network_name=result["blockscout_params"]["network_name"],
+            blockscout_image=result["blockscout_params"]["blockscout_image"],
+            contract_verifier_image=result["blockscout_params"]["contract_verifier_image"],
+            frontend_image=result["blockscout_params"]["frontend_image"],
+            include_frontend=result["blockscout_params"]["include_frontend"],
             wallet_connect_id=result["blockscout_params"]["wallet_connect_id"]
         ),
         uniswap_params=struct(
@@ -1221,8 +1224,11 @@ def get_default_grafana_params():
 
 def get_default_blockscout_params():
     return {
-        "backend_url": "",
-        "frontend_url": "",
+        "network_name": "Bloctopus",
+        "blockscout_image": "blockscout/blockscout:latest",
+        "contract_verifier_image": "ghcr.io/blockscout/smart-contract-verifier:latest",
+        "frontend_image": "ghcr.io/blockscout/frontend:latest",
+        "include_frontend": True,
         "wallet_connect_id": ""
     }
 
