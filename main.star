@@ -537,14 +537,7 @@ def run(plan, args={}):
             # Launch blockscout with the new generalized module
             blockscout_output = blockscout.run(
                 plan,
-                general_args={
-                    "network_name": blockscout_params.network_name,
-                    "network_id": str(network_id),
-                    "blockscout_image": blockscout_params.blockscout_image,
-                    "blockscout_verifier_image": blockscout_params.contract_verifier_image,
-                    "blockscout_frontend_image": blockscout_params.frontend_image,
-                    "include_frontend": blockscout_params.include_frontend,
-                },
+                general_args=general_args,
                 ethereum_args=ethereum_args,
                 persistent=persistent,
                 node_selectors=global_node_selectors,
