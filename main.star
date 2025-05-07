@@ -506,6 +506,7 @@ def run(plan, args={}):
 
             # Prepare ethereum arguments for blockscout
             ethereum_args = {
+                "ws_url": all_el_contexts[0].ws_url,
                 "rpc_url": all_el_contexts[0].rpc_http_url,
                 "client_name": all_el_contexts[0].client_name,
             }
