@@ -25,7 +25,7 @@ apache = import_module("./src/apache/apache_launcher.star")
 full_beaconchain_explorer = import_module(
     "./src/full_beaconchain/full_beaconchain_launcher.star"
 )
-blockscout = import_module("./src/blockscout/blockscout_launcher.star")
+blockscout = import_module("github.com/LZeroAnalytics/blockscout-package/main.star")
 prometheus = import_module("./src/prometheus/prometheus_launcher.star")
 grafana = import_module("./src/grafana/grafana_launcher.star")
 commit_boost_mev_boost = import_module(
@@ -502,17 +502,56 @@ def run(plan, args={}):
             plan.print("Successfully launched execution layer forkmon")
         elif additional_service == "blockscout":
             plan.print("Launching blockscout")
-            blockscout_sc_verif_url = blockscout.launch_blockscout(
+            blockscout_params = args_with_right_defaults.blockscout_params
+
+            # Prepare ethereum arguments for blockscout
+            ethereum_args = {
+                "ws_url": all_el_contexts[0].ws_url,
+                "rpc_url": all_el_contexts[0].rpc_http_url,
+                "client_name": all_el_contexts[0].client_name,
+            }
+
+
+            # Add network-specific configuration
+            if hasattr(network_params, "network") and network_params.network:
+                ethereum_args["extra_env_vars"] = {
+                    "NETWORK": network_params.network,
+                    "SUBNETWORK": network_params.network,
+                }
+
+            general_args = {
+                "network_name": blockscout_params.network_name,
+                "network_id": str(network_id),
+                "blockscout_image": blockscout_params.blockscout_image,
+                "blockscout_verifier_image": blockscout_params.contract_verifier_image,
+                "blockscout_frontend_image": blockscout_params.frontend_image,
+                "include_frontend": blockscout_params.include_frontend,
+            }
+
+            if blockscout_params.frontend_url and blockscout_params.backend_url:
+                plan.print("Using public backend URL: " + blockscout_params.backend_url)
+                general_args["api_protocol"] = "https"
+                general_args["ws_protocol"] = "wss"
+                general_args["app_host"] = blockscout_params.frontend_url
+                general_args["api_host"] = blockscout_params.backend_url
+
+            plan.print("General args debugging")
+            plan.print(general_args)
+            # Launch blockscout with the new generalized module
+            blockscout_output = blockscout.run(
                 plan,
-                all_el_contexts,
-                persistent,
-                global_node_selectors,
-                args_with_right_defaults.port_publisher,
-                index,
-                args_with_right_defaults.blockscout_params,
-                network_id
+                general_args=general_args,
+                ethereum_args=ethereum_args,
+                persistent=persistent,
+                node_selectors=global_node_selectors,
+                port_publisher=args_with_right_defaults.port_publisher,
             )
-            plan.print("Successfully launched blockscout")
+
+            blockscout_url = blockscout_output["blockscout_url"]
+            blockscout_sc_verifier_url = blockscout_output["verification_url"]
+
+            plan.print("Successfully launched blockscout at")
+            plan.print(blockscout_url)
         elif additional_service == "dora":
             plan.print("Launching dora")
             dora_config_template = read_file(static_files.DORA_CONFIG_TEMPLATE_FILEPATH)
@@ -759,9 +798,9 @@ def run(plan, args={}):
 
     output = struct(
         grafana_info=grafana_info,
-        blockscout_sc_verif_url=None
+        blockscout_sc_verifier_url=None
         if ("blockscout" in args_with_right_defaults.additional_services) == False
-        else blockscout_sc_verif_url,
+        else blockscout_sc_verifier_url,
         all_participants=all_participants,
         pre_funded_accounts=prefunded_accounts,
         network_params=network_params,

@@ -213,8 +213,13 @@ SUBCATEGORY_PARAMS = {
         "image",
     ],
     "blockscout_params": [
-        "backend_url",
+        "network_name",
+        "blockscout_image",
+        "contract_verifier_image",
+        "frontend_image",
+        "include_frontend",
         "frontend_url",
+        "backend_url",
         "wallet_connect_id",
     ],
     "uniswap_params": [
