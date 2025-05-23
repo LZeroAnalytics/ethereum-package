@@ -525,7 +525,6 @@ def run(plan, args={}):
                 "blockscout_image": blockscout_params.blockscout_image,
                 "blockscout_verifier_image": blockscout_params.contract_verifier_image,
                 "blockscout_frontend_image": blockscout_params.frontend_image,
-                "include_frontend": blockscout_params.include_frontend,
                 "wallet_connect_id": blockscout_params.wallet_connect_id,
             }
 
