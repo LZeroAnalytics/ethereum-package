@@ -25,7 +25,7 @@ apache = import_module("./src/apache/apache_launcher.star")
 full_beaconchain_explorer = import_module(
     "./src/full_beaconchain/full_beaconchain_launcher.star"
 )
-blockscout = import_module("github.com/LZeroAnalytics/blockscout-package/main.star")
+blockscout = import_module("github.com/LZeroAnalytics/blockscout-package@dev/main.star")
 prometheus = import_module("./src/prometheus/prometheus_launcher.star")
 grafana = import_module("./src/grafana/grafana_launcher.star")
 commit_boost_mev_boost = import_module(
@@ -525,7 +525,6 @@ def run(plan, args={}):
                 "blockscout_image": blockscout_params.blockscout_image,
                 "blockscout_verifier_image": blockscout_params.contract_verifier_image,
                 "blockscout_frontend_image": blockscout_params.frontend_image,
-                "include_frontend": blockscout_params.include_frontend,
                 "wallet_connect_id": blockscout_params.wallet_connect_id,
             }
 
