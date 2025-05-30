@@ -446,6 +446,7 @@ def input_parser(plan, input_args):
             blockscout_image=result["blockscout_params"]["blockscout_image"],
             contract_verifier_image=result["blockscout_params"]["contract_verifier_image"],
             frontend_image=result["blockscout_params"]["frontend_image"],
+            include_frontend=result["blockscout_params"]["include_frontend"],
             frontend_url=result["blockscout_params"]["frontend_url"],
             backend_url=result["blockscout_params"]["backend_url"],
             wallet_connect_id=result["blockscout_params"]["wallet_connect_id"]
@@ -1228,7 +1229,8 @@ def get_default_blockscout_params():
         "network_name": "Bloctopus",
         "blockscout_image": "ghcr.io/blockscout/blockscout:8.0.2",
         "contract_verifier_image": "ghcr.io/blockscout/smart-contract-verifier:latest",
-        "frontend_image": "ghcr.io/blockscout/frontend:v1.38.2",
+        "frontend_image": "ghcr.io/blockscout/frontend:v2.0.1",
+        "include_frontend": True,
         "frontend_url": "",
         "backend_url": "",
         "wallet_connect_id": ""
