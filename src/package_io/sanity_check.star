@@ -217,6 +217,7 @@ SUBCATEGORY_PARAMS = {
         "blockscout_image",
         "contract_verifier_image",
         "frontend_image",
+        "include_frontend",
         "frontend_url",
         "backend_url",
         "wallet_connect_id",
