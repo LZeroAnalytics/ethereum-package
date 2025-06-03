@@ -448,7 +448,9 @@ def input_parser(plan, input_args):
             frontend_image=result["blockscout_params"]["frontend_image"],
             frontend_url=result["blockscout_params"]["frontend_url"],
             backend_url=result["blockscout_params"]["backend_url"],
-            wallet_connect_id=result["blockscout_params"]["wallet_connect_id"]
+            wallet_connect_id=result["blockscout_params"]["wallet_connect_id"],
+            api_protocol=result["blockscout_params"]["api_protocol"],
+            ws_protocol=result["blockscout_params"]["ws_protocol"],
         ),
         uniswap_params=struct(
             backend_url=result["uniswap_params"]["backend_url"],
@@ -539,6 +541,7 @@ def input_parser(plan, input_args):
                 "additional_services"
             ]["public_port_start"],
         ),
+        env=result["env"]
     )
 
 
@@ -1231,7 +1234,9 @@ def get_default_blockscout_params():
         "frontend_image": "ghcr.io/blockscout/frontend:v1.38.2",
         "frontend_url": "",
         "backend_url": "",
-        "wallet_connect_id": ""
+        "wallet_connect_id": "",
+        "blockscout_api_protocol": "http",
+        "blockscout_ws_protocol": "ws"
     }
 
 def get_default_uniswap_params():

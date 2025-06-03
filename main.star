@@ -25,7 +25,6 @@ apache = import_module("./src/apache/apache_launcher.star")
 full_beaconchain_explorer = import_module(
     "./src/full_beaconchain/full_beaconchain_launcher.star"
 )
-blockscout = import_module("github.com/LZeroAnalytics/blockscout-package@dev/main.star")
 prometheus = import_module("./src/prometheus/prometheus_launcher.star")
 grafana = import_module("./src/grafana/grafana_launcher.star")
 commit_boost_mev_boost = import_module(
@@ -73,6 +72,8 @@ PATH_TO_PARSED_BEACON_STATE = "/genesis/output/parsedBeaconState.json"
 
 def run(plan, args={}):
     plan.print(args)
+    env = args["env"]
+    blockscout = import_module("github.com/LZeroAnalytics/blockscout-package@{}/main.star".format(env))
     """Launches an arbitrarily complex ethereum testnet based on the arguments provided
 
     Args:
@@ -530,8 +531,8 @@ def run(plan, args={}):
 
             if blockscout_params.frontend_url and blockscout_params.backend_url:
                 plan.print("Using public backend URL: " + blockscout_params.backend_url)
-                general_args["api_protocol"] = "https"
-                general_args["ws_protocol"] = "wss"
+                general_args["api_protocol"] = blockscout_params.api_protocol
+                general_args["ws_protocol"] = blockscout_params.ws_protocol
                 general_args["app_host"] = blockscout_params.frontend_url
                 general_args["api_host"] = blockscout_params.backend_url
 

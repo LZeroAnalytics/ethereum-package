@@ -220,6 +220,8 @@ SUBCATEGORY_PARAMS = {
         "frontend_url",
         "backend_url",
         "wallet_connect_id",
+        "api_protocol",
+        "ws_protocol",
     ],
     "uniswap_params": [
         "backend_url",
@@ -330,6 +332,7 @@ ADDITIONAL_CATEGORY_PARAMS = {
     "keymanager_enabled": "",
     "checkpoint_sync_enabled": "",
     "checkpoint_sync_url": "",
+    "env": ""
 }
 
 
