@@ -72,8 +72,8 @@ PATH_TO_PARSED_BEACON_STATE = "/genesis/output/parsedBeaconState.json"
 
 def run(plan, args={}):
     plan.print(args)
-    env = args["env"]
-    blockscout = import_module("github.com/LZeroAnalytics/blockscout-package@{}/main.star".format(env))
+    global_env_var = args["global_env_var"]
+    blockscout = import_module("github.com/LZeroAnalytics/blockscout-package@{}/main.star".format(global_env_var))
     """Launches an arbitrarily complex ethereum testnet based on the arguments provided
 
     Args:

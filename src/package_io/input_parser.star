@@ -541,7 +541,7 @@ def input_parser(plan, input_args):
                 "additional_services"
             ]["public_port_start"],
         ),
-        env=result["env"]
+        global_env_var=result["global_env_var"]
     )
 
 
