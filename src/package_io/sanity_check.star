@@ -332,7 +332,7 @@ ADDITIONAL_CATEGORY_PARAMS = {
     "keymanager_enabled": "",
     "checkpoint_sync_enabled": "",
     "checkpoint_sync_url": "",
-    "global_env_var": ""
+    "env": ""
 }
 
 
