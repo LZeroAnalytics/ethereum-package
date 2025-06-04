@@ -1235,8 +1235,8 @@ def get_default_blockscout_params():
         "frontend_url": "",
         "backend_url": "",
         "wallet_connect_id": "",
-        "blockscout_api_protocol": "http",
-        "blockscout_ws_protocol": "ws"
+        "api_protocol": "https",
+        "ws_protocol": "wss"
     }
 
 def get_default_uniswap_params():
