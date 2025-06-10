@@ -36,6 +36,7 @@ def launch_dora(
     mev_endpoint_names,
     port_publisher,
     additional_service_index,
+    docker_cache_params,
 ):
     all_cl_client_info = []
     all_el_client_info = []
@@ -93,6 +94,7 @@ def launch_dora(
         global_node_selectors,
         port_publisher,
         additional_service_index,
+        docker_cache_params,
     )
 
     plan.add_service(SERVICE_NAME, config)
@@ -105,6 +107,7 @@ def get_config(
     node_selectors,
     port_publisher,
     additional_service_index,
+    docker_cache_params,
 ):
     config_file_path = shared_utils.path_join(
         DORA_CONFIG_MOUNT_DIRPATH_ON_SERVICE,
@@ -120,19 +123,44 @@ def get_config(
 
     IMAGE_NAME = dora_params.image
     env_vars = dora_params.env
-    if dora_params.image == constants.DEFAULT_DORA_IMAGE:
+    default_dora_image = (
+        docker_cache_params.url
+        + (docker_cache_params.dockerhub_prefix if docker_cache_params.enabled else "")
+        + constants.DEFAULT_DORA_IMAGE
+    )
+    if dora_params.image == default_dora_image:
         if network_params.fulu_fork_epoch < constants.FAR_FUTURE_EPOCH:
-            IMAGE_NAME = "ethpandaops/dora:fulu-support"
-            env_vars["FRONTEND_PPROF"] = "true"
+            IMAGE_NAME = (
+                docker_cache_params.url
+                + (
+                    docker_cache_params.dockerhub_prefix
+                    if docker_cache_params.enabled
+                    else ""
+                )
+                + "ethpandaops/dora:fulu-support"
+            )
             env_vars["FRONTEND_SHOW_SENSITIVE_PEER_INFOS"] = "true"
             env_vars["FRONTEND_SHOW_PEER_DAS_INFOS"] = "true"
-            env_vars["FRONTEND_SHOW_SUBMIT_DEPOSIT"] = "true"
-            env_vars["FRONTEND_SHOW_SUBMIT_EL_REQUESTS"] = "true"
         if network_params.eip7732_fork_epoch < constants.FAR_FUTURE_EPOCH:
-            IMAGE_NAME = "ethpandaops/dora:eip7732-support"
+            IMAGE_NAME = (
+                docker_cache_params.url
+                + (
+                    docker_cache_params.dockerhub_prefix
+                    if docker_cache_params.enabled
+                    else ""
+                )
+                + "ethpandaops/dora:eip7732-support"
+            )
         if network_params.eip7805_fork_epoch < constants.FAR_FUTURE_EPOCH:
-            IMAGE_NAME = "ethpandaops/dora:eip7805-support"
-
+            IMAGE_NAME = (
+                docker_cache_params.url
+                + (
+                    docker_cache_params.dockerhub_prefix
+                    if docker_cache_params.enabled
+                    else ""
+                )
+                + "ethpandaops/dora:eip7805-support"
+            )
     return ServiceConfig(
         image=IMAGE_NAME,
         ports=USED_PORTS,
@@ -154,6 +182,7 @@ def new_config_template_data(
 ):
     return {
         "Network": network,
+        "PublicRPC": el_client_info[0]["Execution_HTTP_URL"],
         "ListenPortNum": listen_port_num,
         "CLClientInfo": cl_client_info,
         "ELClientInfo": el_client_info,

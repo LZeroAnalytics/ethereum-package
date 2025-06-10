@@ -4,11 +4,12 @@ participants:
 mev_type: commit-boost
 additional_services:
   - tx_fuzz
-  - spamoor_blob
+  - spamoor
   - custom_flood
   - forkmon
   - dora
-  - prometheus_grafana
+  - prometheus
+  - grafana
 mev_params:
   mev_boost_image: ghcr.io/commit-boost/pbs:latest
 network_params:
