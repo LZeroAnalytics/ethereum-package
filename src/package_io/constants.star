@@ -46,24 +46,28 @@ CLIENT_TYPES = struct(
 
 TCP_DISCOVERY_PORT_ID = "tcp-discovery"
 UDP_DISCOVERY_PORT_ID = "udp-discovery"
+QUIC_DISCOVERY_PORT_ID = "quic-discovery"
 RPC_PORT_ID = "rpc"
 WS_RPC_PORT_ID = "ws-rpc"
 WS_PORT_ID = "ws"
 HTTP_PORT_ID = "http"
+TORRENT_PORT_ID = "torrent"
 PROFILING_PORT_ID = "profiling"
 VALIDATOR_HTTP_PORT_ID = "http-validator"
 METRICS_PORT_ID = "metrics"
 ENGINE_RPC_PORT_ID = "engine-rpc"
 ENGINE_WS_PORT_ID = "engine-ws"
+DEBUG_PORT_ID = "debug"
 ADMIN_PORT_ID = "admin"
 RBUILDER_PORT_ID = "rbuilder-rpc"
+RBUILDER_METRICS_PORT_ID = "rbuilder-metric"
 LITTLE_BIGTABLE_PORT_ID = "littlebigtable"
 VALDIATOR_GRPC_PORT_ID = "grpc"
 
 VALIDATING_REWARDS_ACCOUNT = "0x8943545177806ED17B9F23F0a21ee5948eCaa776"
 MAX_ENR_ENTRIES = 20
 MAX_ENODE_ENTRIES = 20
-
+MIN_PEERS = 0
 GENESIS_VALIDATORS_ROOT_PLACEHOLDER = "GENESIS_VALIDATORS_ROOT_PLACEHOLDER"
 
 ARCHIVE_MODE = True
@@ -89,11 +93,10 @@ MEV_RS_MEV_TYPE = "mev-rs"
 COMMIT_BOOST_MEV_TYPE = "commit-boost"
 DEFAULT_DORA_IMAGE = "ethpandaops/dora:latest"
 DEFAULT_SPAMOOR_IMAGE = "ethpandaops/spamoor:latest"
-DEFAULT_SPAMOOR_BLOB_IMAGE = "ethpandaops/spamoor:latest"
 DEFAULT_ASSERTOOR_IMAGE = "ethpandaops/assertoor:latest"
 DEFAULT_SNOOPER_IMAGE = "ethpandaops/rpc-snooper:latest"
 DEFAULT_ETHEREUM_GENESIS_GENERATOR_IMAGE = (
-    "tiljordan/ethereum-genesis-generator:4.0.4"
+    "tiljordan/ethereum-genesis-generator:4.0.11"
 )
 DEFAULT_YQ_IMAGE = "linuxserver/yq"
 DEFAULT_FLASHBOTS_RELAY_IMAGE = "ethpandaops/mev-boost-relay:main"
@@ -107,7 +110,9 @@ DEFAULT_MEV_PUBKEY = "0xa55c1285d84ba83a5ad26420cd5ad3091e49c55a813eee651cd467db
 DEFAULT_MEV_SECRET_KEY = (
     "0x607a11b45a7219cc61a3d9c5fd08c7eebd602a6a19a977f8d3771d5711a550f2"
 )
-
+MEV_BOOST_SERVICE_NAME_PREFIX = "mev-boost"
+COMMIT_BOOST_SERVICE_NAME_PREFIX = "commit-boost"
+MEV_BOOST_PORT = 18550
 DEFAULT_MNEMONIC = "giant issue aisle success illegal bike spike question tent bar rely arctic volcano long crawl hungry vocal artwork sniff fantasy very lucky have athlete"
 
 PRIVATE_IP_ADDRESS_PLACEHOLDER = "KURTOSIS_IP_ADDR_PLACEHOLDER"
@@ -176,7 +181,7 @@ DEPOSIT_CONTRACT_ADDRESS = {
     "mainnet": "0x00000000219ab540356cBB839Cbe05303d7705Fa",
     "sepolia": "0x7f02C3E3c98b133055B8B348B2Ac625669Ed295D",
     "holesky": "0x4242424242424242424242424242424242424242",
-    "ephemery": "0x4242424242424242424242424242424242424242",
+    "ephemery": "0x00000000219ab540356cBB839Cbe05303d7705Fa",
     "hoodi": "0x00000000219ab540356cBB839Cbe05303d7705Fa",
 }
 
@@ -305,8 +310,3 @@ VOLUME_SIZE["mainnet-shadowfork"] = VOLUME_SIZE["mainnet"]
 VOLUME_SIZE["sepolia-shadowfork"] = VOLUME_SIZE["sepolia"]
 VOLUME_SIZE["holesky-shadowfork"] = VOLUME_SIZE["holesky"]
 VOLUME_SIZE["hoodi-shadowfork"] = VOLUME_SIZE["hoodi"]
-
-SPAMOOR_BLOB_THROUGHPUT_MULTIPLIER = 2
-SPAMOOR_BLOB_DEFAULT_THROUGHPUT = 3
-SPAMOOR_BLOB_DEFAULT_SIDECARS = 2
-SPAMOOR_BLOB_DEFAULT_MAX_WALLETS = 29

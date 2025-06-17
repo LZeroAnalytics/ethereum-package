@@ -9,7 +9,7 @@ constants = import_module("../package_io/constants.star")
 input_parser = import_module("../package_io/input_parser.star")
 shared_utils = import_module("../shared_utils/shared_utils.star")
 
-engine_snooper = import_module("../snooper/snooper_engine_launcher.star")
+snooper_el_launcher = import_module("../snooper/snooper_el_launcher.star")
 
 cl_context_BOOTNODE = None
 
@@ -29,27 +29,23 @@ def launch(
     validator_data,
     prysm_password_relative_filepath,
     prysm_password_artifact_uuid,
+    global_other_index,
 ):
     plan.print("Launching CL network")
 
     cl_launchers = {
         constants.CL_TYPE.lighthouse: {
-            "launcher": lighthouse.new_lighthouse_launcher(
-                el_cl_data, jwt_file, network_params
-            ),
+            "launcher": lighthouse.new_lighthouse_launcher(el_cl_data, jwt_file),
             "launch_method": lighthouse.launch,
         },
         constants.CL_TYPE.lodestar: {
-            "launcher": lodestar.new_lodestar_launcher(
-                el_cl_data, jwt_file, network_params
-            ),
+            "launcher": lodestar.new_lodestar_launcher(el_cl_data, jwt_file),
             "launch_method": lodestar.launch,
         },
         constants.CL_TYPE.nimbus: {
             "launcher": nimbus.new_nimbus_launcher(
                 el_cl_data,
                 jwt_file,
-                network_params,
                 keymanager_file,
             ),
             "launch_method": nimbus.launch,
@@ -58,7 +54,6 @@ def launch(
             "launcher": prysm.new_prysm_launcher(
                 el_cl_data,
                 jwt_file,
-                network_params,
             ),
             "launch_method": prysm.launch,
         },
@@ -66,7 +61,6 @@ def launch(
             "launcher": teku.new_teku_launcher(
                 el_cl_data,
                 jwt_file,
-                network_params,
                 keymanager_file,
             ),
             "launch_method": teku.launch,
@@ -75,13 +69,12 @@ def launch(
             "launcher": grandine.new_grandine_launcher(
                 el_cl_data,
                 jwt_file,
-                network_params,
             ),
             "launch_method": grandine.launch,
         },
     }
 
-    all_snooper_engine_contexts = []
+    all_snooper_el_engine_contexts = []
     all_cl_contexts = []
     preregistered_validator_keys_for_nodes = (
         validator_data.per_node_keystores
@@ -128,21 +121,24 @@ def launch(
         el_context = all_el_contexts[index]
 
         cl_context = None
-        snooper_engine_context = None
+        snooper_el_engine_context = None
         if participant.snooper_enabled:
             snooper_service_name = "snooper-engine-{0}-{1}-{2}".format(
                 index_str, cl_type, el_type
             )
-            snooper_engine_context = engine_snooper.launch(
+            snooper_el_engine_context = snooper_el_launcher.launch_snooper(
                 plan,
                 snooper_service_name,
                 el_context,
                 node_selectors,
+                args_with_right_defaults.port_publisher,
+                global_other_index,
                 args_with_right_defaults.docker_cache_params,
             )
+            global_other_index += 1
             plan.print(
                 "Successfully added {0} snooper participants".format(
-                    snooper_engine_context
+                    snooper_el_engine_context
                 )
             )
         checkpoint_sync_url = args_with_right_defaults.checkpoint_sync_url
@@ -166,7 +162,7 @@ def launch(
                         "Checkpoint sync URL is required if you enabled checkpoint_sync for custom networks. Please provide a valid URL."
                     )
 
-        all_snooper_engine_contexts.append(snooper_engine_context)
+        all_snooper_el_engine_contexts.append(snooper_el_engine_context)
         full_name = "{0}-{1}-{2}".format(index_str, el_type, cl_type)
         if index == 0:
             cl_context = launch_method(
@@ -179,7 +175,7 @@ def launch(
                 el_context,
                 full_name,
                 new_cl_node_validator_keystores,
-                snooper_engine_context,
+                snooper_el_engine_context,
                 persistent,
                 tolerations,
                 node_selectors,
@@ -187,6 +183,7 @@ def launch(
                 checkpoint_sync_url,
                 args_with_right_defaults.port_publisher,
                 index,
+                network_params,
             )
         else:
             boot_cl_client_ctx = all_cl_contexts
@@ -200,7 +197,7 @@ def launch(
                 el_context,
                 full_name,
                 new_cl_node_validator_keystores,
-                snooper_engine_context,
+                snooper_el_engine_context,
                 persistent,
                 tolerations,
                 node_selectors,
@@ -208,6 +205,7 @@ def launch(
                 checkpoint_sync_url,
                 args_with_right_defaults.port_publisher,
                 index,
+                network_params,
             )
 
         # Add participant cl additional prometheus labels
@@ -218,6 +216,7 @@ def launch(
         all_cl_contexts.append(cl_context)
     return (
         all_cl_contexts,
-        all_snooper_engine_contexts,
+        all_snooper_el_engine_contexts,
         preregistered_validator_keys_for_nodes,
+        global_other_index,
     )

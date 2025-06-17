@@ -17,8 +17,8 @@ additional_services:
   - tx_fuzz
   - forkmon
   - dora
-  - prometheus_grafana
-  - spamoor_blob
+  - prometheus
+  - grafana
   - custom_flood
   - blobscan
   - dugtrio
@@ -29,3 +29,6 @@ additional_services:
 ethereum_metrics_exporter_enabled: true
 snooper_enabled: true
 keymanager_enabled: true
+docker_cache_params:
+  enabled: true
+  url: "docker.ethquokkaops.io"
