@@ -526,6 +526,8 @@ def input_parser(plan, input_args):
             wallet_connect_id=result["blockscout_params"]["wallet_connect_id"],
             api_protocol=result["blockscout_params"]["api_protocol"],
             ws_protocol=result["blockscout_params"]["ws_protocol"],
+            service_name_suffix=result["blockscout_params"]["service_name_suffix"],
+            port_frontend_override=result["blockscout_params"]["port_frontend_override"],
         ),
         uniswap_params=struct(
             backend_url=result["uniswap_params"]["backend_url"],
@@ -1366,7 +1368,9 @@ def get_default_blockscout_params():
         "backend_url": "",
         "wallet_connect_id": "",
         "api_protocol": "https",
-        "ws_protocol": "wss"
+        "ws_protocol": "wss",
+        "service_name_suffix": "",
+        "port_frontend_override": ""
     }
 
 def get_default_uniswap_params():

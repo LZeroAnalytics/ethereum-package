@@ -247,6 +247,8 @@ SUBCATEGORY_PARAMS = {
         "wallet_connect_id",
         "api_protocol",
         "ws_protocol",
+        "service_name_suffix",
+        "port_frontend_override",
     ],
     "uniswap_params": [
         "backend_url",

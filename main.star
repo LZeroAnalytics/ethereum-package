@@ -539,6 +539,8 @@ def run(plan, args={}):
                 persistent=persistent,
                 node_selectors=global_node_selectors,
                 port_publisher=args_with_right_defaults.port_publisher,
+                service_name_suffix=blockscout_params.service_name_suffix,
+                port_frontend_override=blockscout_params.port_frontend_override,
             )
 
             blockscout_url = blockscout_output["blockscout_url"]
