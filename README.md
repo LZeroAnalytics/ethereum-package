@@ -5,7 +5,7 @@ This project is a fork of the ethpandaops [Ethereum Package](https://github.com/
 It is fully synced with the original ethereum package and provides the same capabilities. Additionally, this package adds additional features. Specifically, it enables:
 
 - Fork any public EVM-based network (using a custom Reth client)
-- A faucet for ETH and USDC (refer to the [docs](https://github.com/LZeroAnalytics/ethereum-faucet))
+- A faucet for ETH and USDC (refer to the [docs](https://github.com/0xBloctopus/ethereum-faucet))
 - A fully functional Uniswap interface (requires forking, only available in cloud environments)
 - Blockscout explorer (only available in cloud environments)
 
@@ -16,7 +16,7 @@ It is fully synced with the original ethereum package and provides the same capa
 3. Run the package with default configurations from the command line:
 
    ```bash
-   kurtosis run --enclave my-testnet github.com/LZeroAnalytics/ethereum-package
+   kurtosis run --enclave my-testnet github.com/0xBloctopus/ethereum-package
    ```
 
 #### Run with your own configuration
@@ -24,7 +24,7 @@ It is fully synced with the original ethereum package and provides the same capa
 Kurtosis packages are parameterizable, meaning you can customize your network and its behavior to suit your needs by storing parameters in a file that you can pass in at runtime like so:
 
 ```bash
-kurtosis run --enclave my-testnet github.com/LZeroAnalytics/ethereum-package --args-file network_params.yaml
+kurtosis run --enclave my-testnet github.com/0xBloctopus/ethereum-package --args-file network_params.yaml
 ```
 
 Where `network_params.yaml` contains the parameters for your network in your home directory.
@@ -727,12 +727,12 @@ assertoor_params:
   #       someCustomTestConfig: "some value"
   tests: []
 
-# Faucet params for https://github.com/LZeroAnalytics/ethereum-faucet
+# Faucet params for https://github.com/0xBloctopus/ethereum-faucet
 faucet_params:
   # Private key for faucet account - needs to be prefunded
   private_key: bcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31
 
-# Uniswap params for https://github.com/LZeroAnalytics/uniswap-package
+# Uniswap params for https://github.com/0xBloctopus/uniswap-package
 uniswap_params:
   # URL at which the backend service will be available
   backend_url: <UNISWAP BACKEND URL>
