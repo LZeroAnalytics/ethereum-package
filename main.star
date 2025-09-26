@@ -58,6 +58,10 @@ spamoor = import_module("./src/spamoor/spamoor.star")
 
 faucet = import_module("./src/faucet/faucet_launcher.star")
 
+x402_client = import_module("./src/x402/x402_client_launcher.star")
+x402_server = import_module("./src/x402/x402_server_launcher.star")
+x402_facilitator = import_module("./src/x402/x402_facilitator_launcher.star")
+
 GRAFANA_USER = "admin"
 GRAFANA_PASSWORD = "admin"
 GRAFANA_DASHBOARD_PATH_URL = "/d/QdTOwy-nz/eth2-merge-kurtosis-module-dashboard?orgId=1"
@@ -71,7 +75,7 @@ PATH_TO_PARSED_BEACON_STATE = "/genesis/output/parsedBeaconState.json"
 
 def run(plan, args={}):
     plan.print(args)
-    env = args["env"]
+    env = args.get("env", "main")
     blockscout = import_module("github.com/0xBloctopus/blockscout-package@{}/main.star".format(env))
     """Launches an arbitrarily complex ethereum testnet based on the arguments provided
 
@@ -773,6 +777,36 @@ def run(plan, args={}):
                 all_participants[0].el_context.ip_addr,
                 all_participants[0].el_context.rpc_port_num,
             )
+        elif additional_service == "x402-facilitator":
+            plan.print("Launching x402 facilitator")
+            x402_facilitator.launch_x402_facilitator(
+                plan,
+                args_with_right_defaults.x402_facilitator_params,
+                global_node_selectors,
+                args_with_right_defaults.port_publisher,
+                index,
+            )
+            plan.print("Successfully launched x402 facilitator")
+        elif additional_service == "x402-server":
+            plan.print("Launching x402 server")
+            x402_server.launch_x402_server(
+                plan,
+                args_with_right_defaults.x402_server_params,
+                global_node_selectors,
+                args_with_right_defaults.port_publisher,
+                index,
+            )
+            plan.print("Successfully launched x402 server")
+        elif additional_service == "x402-client":
+            plan.print("Launching x402 client")
+            x402_client.launch_x402_client(
+                plan,
+                args_with_right_defaults.x402_client_params,
+                global_node_selectors,
+                args_with_right_defaults.port_publisher,
+                index,
+            )
+            plan.print("Successfully launched x402 client")
         else:
             fail("Invalid additional service %s" % (additional_service))
     if launch_prometheus_grafana:

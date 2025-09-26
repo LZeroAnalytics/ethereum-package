@@ -1,0 +1,14 @@
+{
+  "name": "x402-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "dotenv": "^16.0.0"
+  }
+}

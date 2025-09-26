@@ -314,6 +314,23 @@ SUBCATEGORY_PARAMS = {
     "faucet_params": [
         "private_key",
         "address",
+    ],
+    "x402_client_params": [
+        "image",
+        "private_key",
+        "resource_server_url",
+        "endpoint_path",
+    ],
+    "x402_server_params": [
+        "image",
+        "facilitator_url",
+        "address",
+    ],
+    "x402_facilitator_params": [
+        "image",
+        "evm_private_key",
+        "svm_private_key",
+        "port",
     ]
 }
 
@@ -338,6 +355,9 @@ ADDITIONAL_SERVICES_PARAMS = [
     "spamoor",
     "faucet",
     "uniswap",
+    "x402-client",
+    "x402-server",
+    "x402-facilitator",
 ]
 
 ADDITIONAL_CATEGORY_PARAMS = {
@@ -356,7 +376,10 @@ ADDITIONAL_CATEGORY_PARAMS = {
     "keymanager_enabled": "",
     "checkpoint_sync_enabled": "",
     "checkpoint_sync_url": "",
-    "env": ""
+    "env": "",
+    "x402_client_params": "",
+    "x402_server_params": "",
+    "x402_facilitator_params": ""
 }
 
 

@@ -29,6 +29,15 @@ VC_TYPE = struct(
 
 REMOTE_SIGNER_TYPE = struct(web3signer="web3signer")
 
+# X402 Payment Services
+X402_CLIENT_SERVICE_NAME = "x402-client"
+X402_SERVER_SERVICE_NAME = "x402-server"
+X402_FACILITATOR_SERVICE_NAME = "x402-facilitator"
+
+DEFAULT_X402_CLIENT_IMAGE = "x402-client:latest"
+DEFAULT_X402_SERVER_IMAGE = "x402-server:latest"
+DEFAULT_X402_FACILITATOR_IMAGE = "x402-facilitator:latest"
+
 GLOBAL_LOG_LEVEL = struct(
     info="info",
     error="error",
