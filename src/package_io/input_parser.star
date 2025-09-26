@@ -66,6 +66,26 @@ MIN_VALIDATORS = 64
 
 DEFAULT_ADDITIONAL_SERVICES = []
 
+# X402 Payment Service Defaults
+DEFAULT_X402_CLIENT_PARAMS = {
+    "image": constants.DEFAULT_X402_CLIENT_IMAGE,
+    "private_key": "",
+    "resource_server_url": "http://x402-server:4021",
+    "endpoint_path": "/protected",
+}
+
+DEFAULT_X402_SERVER_PARAMS = {
+    "image": constants.DEFAULT_X402_SERVER_IMAGE,
+    "facilitator_url": "http://x402-facilitator:3000",
+    "address": "",
+}
+
+DEFAULT_X402_FACILITATOR_PARAMS = {
+    "image": constants.DEFAULT_X402_FACILITATOR_IMAGE,
+    "cdp_api_key_id": "",
+    "cdp_api_key_secret": "",
+}
+
 ATTR_TO_BE_SKIPPED_AT_ROOT = (
     "network_params",
     "participants",
@@ -104,6 +124,9 @@ def input_parser(plan, input_args):
         result["additional_services"] = DEFAULT_ADDITIONAL_SERVICES
     else:
         result["additional_services"] = []
+    result["x402_client_params"] = get_default_x402_client_params()
+    result["x402_server_params"] = get_default_x402_server_params()
+    result["x402_facilitator_params"] = get_default_x402_facilitator_params()
     result["tx_fuzz_params"] = get_default_tx_fuzz_params()
     result["custom_flood_params"] = get_default_custom_flood_params()
     result["disable_peer_scoring"] = False
@@ -173,6 +196,18 @@ def input_parser(plan, input_args):
             for sub_attr in input_args["prometheus_params"]:
                 sub_value = input_args["prometheus_params"][sub_attr]
                 result["prometheus_params"][sub_attr] = sub_value
+        elif attr == "x402_client_params":
+            for sub_attr in input_args["x402_client_params"]:
+                sub_value = input_args["x402_client_params"][sub_attr]
+                result["x402_client_params"][sub_attr] = sub_value
+        elif attr == "x402_server_params":
+            for sub_attr in input_args["x402_server_params"]:
+                sub_value = input_args["x402_server_params"][sub_attr]
+                result["x402_server_params"][sub_attr] = sub_value
+        elif attr == "x402_facilitator_params":
+            for sub_attr in input_args["x402_facilitator_params"]:
+                sub_value = input_args["x402_facilitator_params"][sub_attr]
+                result["x402_facilitator_params"][sub_attr] = sub_value
         elif attr == "grafana_params":
             for sub_attr in input_args["grafana_params"]:
                 sub_value = input_args["grafana_params"][sub_attr]
@@ -565,6 +600,9 @@ def input_parser(plan, input_args):
             private_key=result["faucet_params"]["private_key"],
         ),
         additional_services=result["additional_services"],
+        x402_client_params=result["x402_client_params"],
+        x402_server_params=result["x402_server_params"],
+        x402_facilitator_params=result["x402_facilitator_params"],
         wait_for_finalization=result["wait_for_finalization"],
         global_log_level=result["global_log_level"],
         mev_type=result["mev_type"],
@@ -614,7 +652,7 @@ def input_parser(plan, input_args):
                 "public_port_start"
             ],
         ),
-        env=result["env"]
+        env=result.get("env", "main")
     )
 
 
@@ -1718,3 +1756,15 @@ def get_default_ethereum_genesis_generator_params():
     return {
         "image": constants.DEFAULT_ETHEREUM_GENESIS_GENERATOR_IMAGE,
     }
+
+
+def get_default_x402_client_params():
+    return DEFAULT_X402_CLIENT_PARAMS
+
+
+def get_default_x402_server_params():
+    return DEFAULT_X402_SERVER_PARAMS
+
+
+def get_default_x402_facilitator_params():
+    return DEFAULT_X402_FACILITATOR_PARAMS
