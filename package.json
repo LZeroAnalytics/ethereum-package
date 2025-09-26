@@ -1,0 +1,12 @@
+{
+  "name": "x402-test-suite",
+  "version": "1.0.0",
+  "description": "Test suite for x402 payment flow with real transaction data",
+  "main": "test_x402_flow.js",
+  "scripts": {
+    "test": "node test_x402_flow.js"
+  },
+  "dependencies": {
+    "viem": "^2.37.8"
+  }
+}

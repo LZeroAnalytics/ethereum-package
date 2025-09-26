@@ -57,43 +57,57 @@ async function createAuthHeader(
 async function getRecentTransaction() {
   try {
     const latestBlock = await publicClient.getBlockNumber();
-    const block = await publicClient.getBlock({ 
-      blockNumber: latestBlock,
-      includeTransactions: true 
-    });
     
-    if (block.transactions && block.transactions.length > 0) {
-      const tx = block.transactions[0] as any;
-      return {
-        hash: tx.hash,
-        from: tx.from,
-        to: tx.to,
-        value: tx.value?.toString() || '0',
-        blockNumber: block.number?.toString(),
-        blockHash: block.hash,
-        transactionIndex: 0
-      };
+    for (let i = 0; i < 10; i++) {
+      const blockNumber = latestBlock - BigInt(i);
+      if (blockNumber < 0n) break;
+      
+      const block = await publicClient.getBlock({ 
+        blockNumber,
+        includeTransactions: true 
+      });
+      
+      if (block.transactions && block.transactions.length > 0) {
+        const tx = block.transactions[0] as any;
+        console.log(`Found real transaction in block ${blockNumber}:`, tx.hash);
+        return {
+          hash: tx.hash,
+          from: tx.from,
+          to: tx.to,
+          value: tx.value?.toString() || '0',
+          blockNumber: block.number?.toString(),
+          blockHash: block.hash,
+          transactionIndex: 0,
+          gasUsed: tx.gas?.toString() || '21000',
+          gasPrice: tx.gasPrice?.toString() || '0'
+        };
+      }
     }
     
+    console.log('No real transactions found, using realistic fallback data');
     return {
       hash: `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`,
-      from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-      to: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
+      from: '0x8943545177806ED17B9F23F0a21ee5948eCaa776',
+      to: '0xE25583099BA105D9ec0A67f5Ae86D90e50036425',
       value: parseEther('0.001').toString(),
       blockNumber: latestBlock.toString(),
       blockHash: `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`,
-      transactionIndex: 0
+      transactionIndex: 0,
+      gasUsed: '21000',
+      gasPrice: '20000000000'
     };
   } catch (error) {
     console.error('Failed to get recent transaction:', error);
     return {
       hash: `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`,
-      from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-      to: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
+      from: '0x8943545177806ED17B9F23F0a21ee5948eCaa776',
+      to: '0xE25583099BA105D9ec0A67f5Ae86D90e50036425',
       value: parseEther('0.001').toString(),
       blockNumber: '1',
       blockHash: `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`,
-      transactionIndex: 0
+      transactionIndex: 0,
+      gasUsed: '21000',
+      gasPrice: '20000000000'
     };
   }
 }
@@ -126,19 +140,24 @@ app.post('/verify', async (req, res) => {
     
     const paymentRequirements = {
       scheme: "exact",
-      network: "base",
+      network: "base-sepolia",
       maxAmountRequired: recentTx.value,
-      resource: "https://api.example.com/premium/resource/123",
-      description: "Premium API access for data analysis",
+      resource: "http://x402-server:4021/protected",
+      description: "Access to protected endpoint on Kurtosis network",
       mimeType: "application/json",
       outputSchema: {
-        data: "string"
+        data: "string",
+        message: "string",
+        timestamp: "string"
       },
       payTo: recentTx.to,
-      maxTimeoutSeconds: 10,
-      asset: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      maxTimeoutSeconds: 300,
+      asset: "0x0000000000000000000000000000000000000000",
       extra: {
-        gasLimit: "1000000"
+        gasLimit: recentTx.gasUsed || "21000",
+        gasPrice: recentTx.gasPrice || "20000000000",
+        blockNumber: recentTx.blockNumber,
+        blockHash: recentTx.blockHash
       }
     };
     
