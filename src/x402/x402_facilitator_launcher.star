@@ -45,69 +45,10 @@ def get_config(
         0,
     )
 
-    package_json = {
-        "name": "x402-facilitator",
-        "version": "1.0.0",
-        "type": "module",
-        "scripts": {"start": "tsx index.ts"},
-        "dependencies": {
-            "express": "^4.18.0",
-            "tsx": "^4.0.0",
-            "typescript": "^5.0.0",
-            "dotenv": "^16.0.0",
-        },
-    }
-
-    facilitator_code = """import express from 'express';
-import { config } from 'dotenv';
-
-config();
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.use(express.json());
-
-app.post('/verify', (req, res) => {
-    console.log('Verify payment request:', req.body);
-    res.json({
-        success: true,
-        verified: true,
-        message: 'Payment verified successfully'
-    });
-});
-
-app.post('/settle', (req, res) => {
-    console.log('Settle payment request:', req.body);
-    res.json({
-        success: true,
-        settled: true,
-        message: 'Payment settled successfully'
-    });
-});
-
-app.get('/supported', (req, res) => {
-    res.json({
-        networks: ['ethereum', 'solana'],
-        tokens: ['ETH', 'SOL', 'USDC'],
-        message: 'X402 Facilitator supports multiple networks'
-    });
-});
-
-app.get('/health', (req, res) => {
-    res.json({ status: 'healthy', service: 'x402-facilitator' });
-});
-
-app.listen(port, () => {
-    console.log(`X402 Facilitator running on port ${port}`);
-    console.log(`EVM Private Key configured: ${process.env.EVM_PRIVATE_KEY ? 'Yes' : 'No'}`);
-});
-"""
-
     env_vars = {
         "PORT": str(HTTP_PORT_NUMBER),
-        "EVM_PRIVATE_KEY": x402_facilitator_params.get("evm_private_key", ""),
-        "SVM_PRIVATE_KEY": x402_facilitator_params.get("svm_private_key", ""),
+        "CDP_API_KEY_ID": x402_facilitator_params.get("cdp_api_key_id", ""),
+        "CDP_API_KEY_SECRET": x402_facilitator_params.get("cdp_api_key_secret", ""),
     }
 
     return ServiceConfig(

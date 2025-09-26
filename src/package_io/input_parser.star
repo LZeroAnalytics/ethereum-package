@@ -82,8 +82,8 @@ DEFAULT_X402_SERVER_PARAMS = {
 
 DEFAULT_X402_FACILITATOR_PARAMS = {
     "image": constants.DEFAULT_X402_FACILITATOR_IMAGE,
-    "evm_private_key": "",
-    "port": 3000,
+    "cdp_api_key_id": "",
+    "cdp_api_key_secret": "",
 }
 
 ATTR_TO_BE_SKIPPED_AT_ROOT = (

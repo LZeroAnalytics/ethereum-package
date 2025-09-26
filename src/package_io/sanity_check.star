@@ -331,6 +331,8 @@ SUBCATEGORY_PARAMS = {
         "evm_private_key",
         "svm_private_key",
         "port",
+        "cdp_api_key_id",
+        "cdp_api_key_secret",
     ]
 }
 
