@@ -18,6 +18,7 @@ x402_facilitator_params:
   image: "x402-facilitator:latest"
   cdp_api_key_id: "0fa3e2ea-f0e1-4be0-b64a-96aa85bfafb9"
   cdp_api_key_secret: "gXeo8sTD9GpZybm0iUVi2YtWEF3Q7XmywUx9wHSnsetWDt03cN1togCjid/v6/sR9uRjudkqlVs21uUINUYjdA=="
+  rpc_url: "http://el-1-geth-lighthouse:8545"
 
 x402_server_params:
   image: "x402-server:latest"

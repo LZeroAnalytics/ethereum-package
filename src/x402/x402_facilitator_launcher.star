@@ -49,6 +49,7 @@ def get_config(
         "PORT": str(HTTP_PORT_NUMBER),
         "CDP_API_KEY_ID": x402_facilitator_params.get("cdp_api_key_id", ""),
         "CDP_API_KEY_SECRET": x402_facilitator_params.get("cdp_api_key_secret", ""),
+        "RPC_URL": x402_facilitator_params.get("rpc_url", "http://el-1-geth-lighthouse:8545"),
     }
 
     return ServiceConfig(

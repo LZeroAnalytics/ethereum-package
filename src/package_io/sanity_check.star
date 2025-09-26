@@ -333,6 +333,7 @@ SUBCATEGORY_PARAMS = {
         "port",
         "cdp_api_key_id",
         "cdp_api_key_secret",
+        "rpc_url",
     ]
 }
 

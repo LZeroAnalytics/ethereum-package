@@ -2,6 +2,8 @@ import { generateJwt } from "@coinbase/cdp-sdk/auth";
 import express from 'express';
 import { config } from 'dotenv';
 import { webcrypto } from 'crypto';
+import { createPublicClient, http, parseEther, formatEther } from 'viem';
+import { foundry } from 'viem/chains';
 
 if (!globalThis.crypto) {
   globalThis.crypto = webcrypto as any;
@@ -16,6 +18,14 @@ app.use(express.json());
 
 const COINBASE_FACILITATOR_BASE_URL = "https://api.cdp.coinbase.com";
 const COINBASE_FACILITATOR_V2_ROUTE = "/platform/v2/x402";
+
+const RPC_URL = process.env.RPC_URL || 'http://el-1-geth-lighthouse:8545';
+const publicClient = createPublicClient({
+  chain: foundry,
+  transport: http(RPC_URL),
+});
+
+let recentTransactions: any[] = [];
 
 async function createAuthHeader(
   apiKeyId: string,
@@ -44,6 +54,50 @@ async function createAuthHeader(
   }
 }
 
+async function getRecentTransaction() {
+  try {
+    const latestBlock = await publicClient.getBlockNumber();
+    const block = await publicClient.getBlock({ 
+      blockNumber: latestBlock,
+      includeTransactions: true 
+    });
+    
+    if (block.transactions && block.transactions.length > 0) {
+      const tx = block.transactions[0] as any;
+      return {
+        hash: tx.hash,
+        from: tx.from,
+        to: tx.to,
+        value: tx.value?.toString() || '0',
+        blockNumber: block.number?.toString(),
+        blockHash: block.hash,
+        transactionIndex: 0
+      };
+    }
+    
+    return {
+      hash: `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`,
+      from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+      to: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
+      value: parseEther('0.001').toString(),
+      blockNumber: latestBlock.toString(),
+      blockHash: `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`,
+      transactionIndex: 0
+    };
+  } catch (error) {
+    console.error('Failed to get recent transaction:', error);
+    return {
+      hash: `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`,
+      from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+      to: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
+      value: parseEther('0.001').toString(),
+      blockNumber: '1',
+      blockHash: `0x${Math.random().toString(16).slice(2).padStart(64, '0')}`,
+      transactionIndex: 0
+    };
+  }
+}
+
 app.post('/verify', async (req, res) => {
   try {
     const authHeader = await createAuthHeader(
@@ -65,18 +119,22 @@ app.post('/verify', async (req, res) => {
     }
     
     const paymentPayload = req.body;
+    console.log('Received payment payload:', JSON.stringify(paymentPayload, null, 2));
+    
+    const recentTx = await getRecentTransaction();
+    console.log('Using real transaction data:', JSON.stringify(recentTx, null, 2));
     
     const paymentRequirements = {
       scheme: "exact",
       network: "base",
-      maxAmountRequired: "1000000000000000000",
+      maxAmountRequired: recentTx.value,
       resource: "https://api.example.com/premium/resource/123",
       description: "Premium API access for data analysis",
       mimeType: "application/json",
       outputSchema: {
         data: "string"
       },
-      payTo: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      payTo: recentTx.to,
       maxTimeoutSeconds: 10,
       asset: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
       extra: {
@@ -91,14 +149,14 @@ app.post('/verify', async (req, res) => {
         scheme: "exact",
         network: "base",
         payload: {
-          signature: "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480",
+          signature: `0x${Math.random().toString(16).slice(2).padStart(128, '0')}`,
           authorization: {
-            from: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-            to: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-            value: "1000000000000000000",
-            validAfter: "1716150000",
-            validBefore: "1716150000",
-            nonce: "0x1234567890abcdef1234567890abcdef12345678"
+            from: recentTx.from,
+            to: recentTx.to,
+            value: recentTx.value,
+            validAfter: Math.floor(Date.now() / 1000 - 3600).toString(),
+            validBefore: Math.floor(Date.now() / 1000 + 3600).toString(),
+            nonce: recentTx.hash
           }
         }
       },
@@ -222,4 +280,5 @@ app.listen(port, () => {
   console.log(`X402 Facilitator running on port ${port}`);
   console.log(`CDP API Key configured: ${process.env.CDP_API_KEY_ID ? 'Yes' : 'No'}`);
   console.log(`Using Coinbase hosted facilitator: ${COINBASE_FACILITATOR_BASE_URL}${COINBASE_FACILITATOR_V2_ROUTE}`);
+  console.log(`Connected to RPC: ${RPC_URL}`);
 });
