@@ -1,6 +1,11 @@
 import { generateJwt } from "@coinbase/cdp-sdk/auth";
 import express from 'express';
 import { config } from 'dotenv';
+import { webcrypto } from 'crypto';
+
+if (!globalThis.crypto) {
+  globalThis.crypto = webcrypto as any;
+}
 
 config();
 
@@ -59,16 +64,60 @@ app.post('/verify', async (req, res) => {
       return;
     }
     
+    const paymentPayload = req.body;
+    
+    const paymentRequirements = {
+      scheme: "exact",
+      network: "base",
+      maxAmountRequired: "1000000000000000000",
+      resource: "https://api.example.com/premium/resource/123",
+      description: "Premium API access for data analysis",
+      mimeType: "application/json",
+      outputSchema: {
+        data: "string"
+      },
+      payTo: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      maxTimeoutSeconds: 10,
+      asset: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      extra: {
+        gasLimit: "1000000"
+      }
+    };
+    
+    const x402Request = {
+      x402Version: 1,
+      paymentPayload: {
+        x402Version: 1,
+        scheme: "exact",
+        network: "base",
+        payload: {
+          signature: "0xf3746613c2d920b5fdabc0856f2aeb2d4f88ee6037b8cc5d04a71a4462f13480",
+          authorization: {
+            from: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+            to: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+            value: "1000000000000000000",
+            validAfter: "1716150000",
+            validBefore: "1716150000",
+            nonce: "0x1234567890abcdef1234567890abcdef12345678"
+          }
+        }
+      },
+      paymentRequirements
+    };
+    
+    console.log('Sending x402 verify request to CDP:', JSON.stringify(x402Request, null, 2));
+    
     const response = await fetch(`${COINBASE_FACILITATOR_BASE_URL}${COINBASE_FACILITATOR_V2_ROUTE}/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': authHeader
       },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(x402Request)
     });
     
     const data = await response.json();
+    console.log('CDP verify response:', response.status, JSON.stringify(data, null, 2));
     res.status(response.status).json(data);
   } catch (error) {
     console.error('Verify error:', error);
@@ -96,16 +145,35 @@ app.post('/settle', async (req, res) => {
       return;
     }
     
+    const settlementPayload = req.body;
+    
+    const x402Request = {
+      x402Version: 1,
+      settlementPayload: {
+        x402Version: 1,
+        scheme: "exact", 
+        network: settlementPayload.network || "base-sepolia",
+        payload: {
+          transactionHash: settlementPayload.txHash || settlementPayload.transactionHash,
+          blockNumber: settlementPayload.blockNumber || Math.floor(Math.random() * 1000000),
+          transactionIndex: settlementPayload.transactionIndex || 0
+        }
+      }
+    };
+    
+    console.log('Sending x402 settle request to CDP:', JSON.stringify(x402Request, null, 2));
+    
     const response = await fetch(`${COINBASE_FACILITATOR_BASE_URL}${COINBASE_FACILITATOR_V2_ROUTE}/settle`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': authHeader
       },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify(x402Request)
     });
     
     const data = await response.json();
+    console.log('CDP settle response:', response.status, JSON.stringify(data, null, 2));
     res.status(response.status).json(data);
   } catch (error) {
     console.error('Settle error:', error);

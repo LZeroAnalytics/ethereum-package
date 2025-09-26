@@ -1,0 +1,31 @@
+participants:
+  - el_type: geth
+    cl_type: lighthouse
+    count: 1
+
+network_params:
+  network_id: "3151908"
+  deposit_contract_address: "0x4242424242424242424242424242424242424242"
+  seconds_per_slot: 12
+  genesis_delay: 20
+
+additional_services:
+  - x402-facilitator
+  - x402-server  
+  - x402-client
+
+x402_facilitator_params:
+  image: "x402-facilitator:latest"
+  cdp_api_key_id: "0fa3e2ea-f0e1-4be0-b64a-96aa85bfafb9"
+  cdp_api_key_secret: "gXeo8sTD9GpZybm0iUVi2YtWEF3Q7XmywUx9wHSnsetWDt03cN1togCjid/v6/sR9uRjudkqlVs21uUINUYjdA=="
+
+x402_server_params:
+  image: "x402-server:latest"
+  facilitator_url: "http://x402-facilitator:3000"
+  address: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+
+x402_client_params:
+  image: "x402-client:latest"
+  private_key: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+  resource_server_url: "http://x402-server:4021"
+  endpoint_path: "/protected"
